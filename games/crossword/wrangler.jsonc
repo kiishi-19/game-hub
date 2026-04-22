@@ -1,5 +1,6 @@
 {
   "name": "game-hub-crossword",
+  "account_id": "6bea4abeca519658cb8ba205c96c1f70",
   "compatibility_date": "2026-04-21",
   "main": "./src/index.ts",
   "assets": {
