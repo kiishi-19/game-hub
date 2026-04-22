@@ -14,8 +14,7 @@
       --green: #22c55e; --red: #f43f5e; --yellow: #fbbf24;
     }
     body {
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -59,14 +58,31 @@
     @keyframes cFlash { 0%{background:var(--surface)} 40%{background:rgba(34,197,94,0.15)} 100%{background:var(--surface)} }
     @keyframes shake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-8px)} 30%{transform:translateX(8px)} 45%{transform:translateX(-6px)} 60%{transform:translateX(6px)} 75%{transform:translateX(-3px)} 90%{transform:translateX(3px)} }
 
+    /* Logo display */
     .logo-display {
       display:flex; align-items:center; justify-content:center;
-      height:160px; margin-bottom:1.25rem;
+      height:170px; margin-bottom:1.25rem;
+      position:relative;
     }
-    .logo-display svg { width:auto; height:100%; max-width:200px; transition:filter 0.3s; }
-    .logo-display.blurred svg { filter:blur(12px) brightness(0.6); }
+    .logo-img {
+      max-width:200px; max-height:150px;
+      width:auto; height:auto;
+      object-fit:contain;
+      transition:filter 0.5s ease, transform 0.3s ease;
+      filter:drop-shadow(0 4px 20px rgba(0,0,0,0.5));
+    }
+    .logo-img.blurred { filter:blur(18px) brightness(0.5) drop-shadow(0 4px 20px rgba(0,0,0,0.5)); transform:scale(1.05); }
+    .logo-img.revealed { filter:drop-shadow(0 4px 20px rgba(0,0,0,0.5)) drop-shadow(0 0 30px rgba(255,255,255,0.1)); transform:scale(1); }
 
-    .brand-hint { text-align:center; font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; min-height:1.2rem; }
+    /* countdown ring */
+    .reveal-countdown {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      font-size:2.5rem; font-weight:900; color:rgba(255,255,255,0.6);
+      pointer-events:none; transition:opacity 0.3s;
+    }
+    .reveal-countdown.hidden { opacity:0; }
+
+    .brand-hint { text-align:center; font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; min-height:1.2rem; transition:color 0.3s; }
 
     .options { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem; }
     .opt {
@@ -76,12 +92,15 @@
       cursor:pointer; color:var(--text);
       transition:all 0.15s; text-align:left;
       display:flex; align-items:center; gap:0.5rem;
+      font-family:'Inter',sans-serif;
     }
     .opt:hover:not(:disabled) { border-color:var(--accent); background:rgba(220,38,38,0.1); transform:translateY(-1px); }
     .opt.correct { border-color:var(--green); background:rgba(34,197,94,0.12); color:var(--green); animation:popIn 0.25s cubic-bezier(0.34,1.56,0.64,1); }
     .opt.wrong { border-color:var(--red); background:rgba(244,63,94,0.1); color:var(--red); }
     .opt:disabled { cursor:default; }
     .opt-letter { width:1.6rem; height:1.6rem; border-radius:6px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; flex-shrink:0; }
+    .opt.correct .opt-letter { background:rgba(34,197,94,0.2); }
+    .opt.wrong .opt-letter { background:rgba(244,63,94,0.2); }
     @keyframes popIn { 0%{transform:scale(0.9)} 100%{transform:scale(1)} }
 
     .feedback { min-height:2rem; text-align:center; font-size:0.9rem; font-weight:700; padding:0.5rem 0; }
@@ -96,14 +115,14 @@
       color:var(--muted); font-size:0.8rem; font-weight:700; cursor:pointer;
       transition:all 0.15s; font-family:'Inter',sans-serif;
     }
-    .lifeline-btn:hover:not(:disabled) { border-color:rgba(255,255,255,0.3); color:var(--text); }
-    .lifeline-btn:disabled { opacity:0.35; cursor:default; }
+    .lifeline-btn:hover:not(:disabled) { border-color:rgba(255,255,255,0.3); color:var(--text); background:rgba(255,255,255,0.1); }
+    .lifeline-btn:disabled { opacity:0.3; cursor:default; }
 
     /* game over */
     #screen-over { display:none; text-align:center; }
     .over-emoji { font-size:4rem; margin-bottom:0.75rem; animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
     .over-title { font-size:2.2rem; font-weight:900; letter-spacing:-0.03em; margin-bottom:0.5rem; }
-    .over-sub { color:var(--muted); margin-bottom:2rem; font-size:0.9rem; }
+    .over-sub { color:var(--muted); margin-bottom:2rem; font-size:0.9rem; line-height:1.5; }
     .result-chips { display:flex; gap:0.75rem; justify-content:center; margin-bottom:2rem; }
     .chip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem 1.5rem; text-align:center; }
     .chip-val { font-size:2rem; font-weight:900; color:var(--accent2); }
@@ -124,7 +143,7 @@
   <div class="game">
     <div class="header">
       <h1>🚗 <span>Car Logo</span> Quiz</h1>
-      <p>Recognize the brand. No hints. Just you and the logo.</p>
+      <p>Recognize the brand. No name on the logo. Just you and the badge.</p>
     </div>
 
     <div id="screen-game">
@@ -137,14 +156,17 @@
       <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
 
       <div class="logo-card" id="logo-card">
-        <div class="logo-display blurred" id="logo-display"></div>
-        <div class="brand-hint" id="brand-hint">Identify the brand</div>
+        <div class="logo-display">
+          <img class="logo-img blurred" id="logo-img" src="" alt="Car logo" />
+          <div class="reveal-countdown" id="countdown">3</div>
+        </div>
+        <div class="brand-hint" id="brand-hint">Logo reveals in a moment...</div>
         <div class="options" id="options"></div>
         <div class="feedback" id="feedback"></div>
       </div>
 
       <div class="lifelines">
-        <button class="lifeline-btn" id="ll-reveal">👁 Reveal Logo</button>
+        <button class="lifeline-btn" id="ll-reveal">👁 Reveal Now</button>
         <button class="lifeline-btn" id="ll-fifty">✂️ 50/50</button>
         <button class="lifeline-btn" id="ll-skip">⏭ Skip</button>
       </div>
@@ -179,396 +201,210 @@ const canvas=document.getElementById('confetti-canvas');const ctx=canvas.getCont
 function launchConfetti(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;for(let i=0;i<120;i++){particles.push({x:Math.random()*canvas.width,y:-10,vx:(Math.random()-0.5)*6,vy:Math.random()*4+2,w:Math.random()*10+4,h:Math.random()*5+3,rot:Math.random()*360,vr:(Math.random()-0.5)*8,color:['#dc2626','#f87171','#22c55e','#fbbf24','#38bdf8','#a78bfa'][Math.floor(Math.random()*6)],alpha:1});}requestAnimationFrame(animateConfetti);}
 function animateConfetti(){ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>p.alpha>0.05);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;if(p.y>canvas.height*0.7)p.alpha-=0.02;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();});if(particles.length)requestAnimationFrame(animateConfetti);}
 
-// ── CAR LOGOS (inline SVG) ──────────────────────────────────────────────────
+// ── CAR DATA ───────────────────────────────────────────────────────────────
+// Using carlogos.org for real brand logos (no text on logo)
+const BASE = 'https://www.carlogos.org/car-logos/';
+
 const CARS = [
-  {
-    brand: "BMW",
-    hint: "German luxury automaker — 'Bayerische Motoren Werke'",
-    founded: "1916, Munich",
-    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="48" fill="#fff" stroke="#1c1c1c" stroke-width="3"/>
-      <circle cx="50" cy="50" r="40" fill="#1c1c1c"/>
-      <path d="M50 10 A40 40 0 0 1 90 50 L50 50 Z" fill="#fff"/>
-      <path d="M50 50 A40 40 0 0 1 10 50 L50 50 Z" fill="#fff"/>
-      <path d="M50 10 A40 40 0 0 1 90 50 L50 50 Z" fill="#0166b2"/>
-      <path d="M50 90 A40 40 0 0 1 10 50 L50 50 Z" fill="#0166b2"/>
-      <circle cx="50" cy="50" r="16" fill="#1c1c1c" stroke="#fff" stroke-width="2"/>
-      <text x="50" y="55" text-anchor="middle" font-family="Arial" font-weight="900" font-size="11" fill="#fff">BMW</text>
-    </svg>`
-  },
-  {
-    brand: "Ferrari",
-    hint: "Italian supercar brand — prancing horse on yellow shield",
-    founded: "1939, Maranello",
-    svg: `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-      <rect x="5" y="5" width="90" height="110" rx="8" fill="#d62f22"/>
-      <rect x="5" y="5" width="90" height="30" rx="8" fill="#FFCC00"/>
-      <rect x="5" y="25" width="90" height="10" fill="#FFCC00"/>
-      <text x="50" y="28" text-anchor="middle" font-family="Arial" font-weight="900" font-size="14" fill="#000">FERRARI</text>
-      <!-- Horse body -->
-      <path d="M50 50 C40 48 35 55 36 62 C37 68 42 70 46 68 C44 72 42 80 45 85 C47 88 53 88 55 85 C58 80 56 72 54 68 C58 70 63 68 64 62 C65 55 60 48 50 50Z" fill="#000"/>
-      <!-- Horse legs -->
-      <line x1="44" y1="82" x2="42" y2="95" stroke="#000" stroke-width="3" stroke-linecap="round"/>
-      <line x1="48" y1="84" x2="47" y2="97" stroke="#000" stroke-width="3" stroke-linecap="round"/>
-      <line x1="52" y1="84" x2="53" y2="97" stroke="#000" stroke-width="3" stroke-linecap="round"/>
-      <line x1="56" y1="82" x2="58" y2="95" stroke="#000" stroke-width="3" stroke-linecap="round"/>
-      <!-- Horse head/neck -->
-      <ellipse cx="50" cy="45" rx="7" ry="9" fill="#000"/>
-      <ellipse cx="54" cy="38" rx="4" ry="6" fill="#000" transform="rotate(-15 54 38)"/>
-    </svg>`
-  },
-  {
-    brand: "Lamborghini",
-    hint: "Italian supercar — raging bull badge",
-    founded: "1963, Sant'Agata Bolognese",
-    svg: `<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="116" height="76" rx="4" fill="#D4A017" stroke="#000" stroke-width="2"/>
-      <polygon points="60,8 100,72 20,72" fill="#000"/>
-      <!-- Bull silhouette -->
-      <ellipse cx="60" cy="45" rx="18" ry="14" fill="#D4A017"/>
-      <ellipse cx="60" cy="38" rx="10" ry="8" fill="#D4A017"/>
-      <!-- horns -->
-      <path d="M50 36 C44 28 42 22 46 20 C48 19 50 22 52 30Z" fill="#D4A017"/>
-      <path d="M70 36 C76 28 78 22 74 20 C72 19 70 22 68 30Z" fill="#D4A017"/>
-      <!-- eyes -->
-      <circle cx="56" cy="37" r="2" fill="#D4A017"/>
-      <circle cx="64" cy="37" r="2" fill="#D4A017"/>
-      <!-- nose -->
-      <ellipse cx="60" cy="42" rx="5" ry="3.5" fill="#8B6914"/>
-      <circle cx="58" cy="42" r="1.5" fill="#4a3800"/>
-      <circle cx="62" cy="42" r="1.5" fill="#4a3800"/>
-      <text x="60" y="76" text-anchor="middle" font-family="Arial" font-weight="900" font-size="8" fill="#000">LAMBORGHINI</text>
-    </svg>`
-  },
-  {
-    brand: "Mercedes-Benz",
-    hint: "German luxury brand — three-pointed star in a circle",
-    founded: "1926, Stuttgart",
-    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="46" fill="#fff" stroke="#c0c0c0" stroke-width="2"/>
-      <circle cx="50" cy="50" r="40" fill="#fff" stroke="#888" stroke-width="1.5"/>
-      <!-- 3-pointed star -->
-      <polygon points="50,12 56,42 88,50 56,58 50,88 44,58 12,50 44,42" fill="#1c1c1c"/>
-      <!-- refine to 3 points -->
-      <path d="M50 14 L54 44 L80 60 L50 50 L20 60 L46 44 Z" fill="#1c1c1c"/>
-      <path d="M50 14 L50 50 M80 60 L50 50 M20 60 L50 50" stroke="#1c1c1c" stroke-width="6" stroke-linecap="round"/>
-      <circle cx="50" cy="50" r="6" fill="#fff" stroke="#1c1c1c" stroke-width="2"/>
-    </svg>`
-  },
-  {
-    brand: "Toyota",
-    hint: "Japanese giant — three overlapping ellipses",
-    founded: "1937, Japan",
-    svg: `<svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="160" height="80" fill="#EB0A1E"/>
-      <!-- Outer ellipse (body) -->
-      <ellipse cx="80" cy="40" rx="55" ry="28" fill="none" stroke="#fff" stroke-width="5"/>
-      <!-- Inner ellipse (crosspiece) -->
-      <ellipse cx="80" cy="40" rx="33" ry="16" fill="none" stroke="#fff" stroke-width="5"/>
-      <!-- Vertical ellipse -->
-      <ellipse cx="80" cy="40" rx="14" ry="28" fill="none" stroke="#fff" stroke-width="5"/>
-    </svg>`
-  },
-  {
-    brand: "Audi",
-    hint: "German brand — four interlocking rings representing four companies",
-    founded: "1909, Germany",
-    svg: `<svg viewBox="0 0 200 70" xmlns="http://www.w3.org/2000/svg">
-      <rect width="200" height="70" fill="#1c1c1c"/>
-      <circle cx="40" cy="35" r="25" fill="none" stroke="#fff" stroke-width="5"/>
-      <circle cx="80" cy="35" r="25" fill="none" stroke="#fff" stroke-width="5"/>
-      <circle cx="120" cy="35" r="25" fill="none" stroke="#fff" stroke-width="5"/>
-      <circle cx="160" cy="35" r="25" fill="none" stroke="#fff" stroke-width="5"/>
-    </svg>`
-  },
-  {
-    brand: "Porsche",
-    hint: "German sports car — horse on a striped crest",
-    founded: "1931, Stuttgart",
-    svg: `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-      <!-- Shield shape -->
-      <path d="M10 10 H90 V80 L50 115 L10 80 Z" fill="#1c1c1c" stroke="#c8a951" stroke-width="2"/>
-      <!-- Top band -->
-      <rect x="10" y="10" width="80" height="22" fill="#c8a951"/>
-      <!-- Left/right black bands -->
-      <rect x="10" y="32" width="20" height="28" fill="#1c1c1c"/>
-      <rect x="70" y="32" width="20" height="28" fill="#1c1c1c"/>
-      <!-- Center shield with antlers -->
-      <rect x="30" y="32" width="40" height="48" rx="3" fill="#c8a951"/>
-      <!-- Horse silhouette (simple) -->
-      <path d="M50 42 C45 40 40 45 41 52 C42 57 46 59 49 57 L48 68 L52 68 L51 57 C54 59 58 57 59 52 C60 45 55 40 50 42Z" fill="#1c1c1c"/>
-      <text x="50" y="110" text-anchor="middle" font-family="Arial" font-weight="900" font-size="9" fill="#c8a951">PORSCHE</text>
-    </svg>`
-  },
-  {
-    brand: "Ford",
-    hint: "American icon — blue oval, script lettering since 1927",
-    founded: "1903, Detroit",
-    svg: `<svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="80" cy="40" rx="75" ry="36" fill="#003591"/>
-      <ellipse cx="80" cy="40" rx="68" ry="29" fill="none" stroke="#fff" stroke-width="2"/>
-      <text x="80" y="52" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="700" font-size="36" fill="#fff">Ford</text>
-    </svg>`
-  },
-  {
-    brand: "Chevrolet",
-    hint: "American brand — golden bowtie badge since 1913",
-    founded: "1911, Detroit",
-    svg: `<svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="160" height="80" fill="#1c1c1c"/>
-      <!-- Bowtie shape -->
-      <path d="M10 25 H58 V15 H102 V25 H150 V55 H102 V65 H58 V55 H10 Z" fill="#D4A017" stroke="#fff" stroke-width="1"/>
-      <rect x="58" y="25" width="44" height="30" fill="#1c1c1c"/>
-    </svg>`
-  },
-  {
-    brand: "Tesla",
-    hint: "American EV pioneer — T inspired by electric motor cross-section",
-    founded: "2003, California",
-    svg: `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="120" fill="#cc0000"/>
-      <!-- Tesla T -->
-      <path d="M20 25 H80 V38 H57 V95 H43 V38 H20 Z" fill="#fff"/>
-      <!-- Top arc detail -->
-      <path d="M20 25 Q50 15 80 25" fill="none" stroke="#fff" stroke-width="4"/>
-      <path d="M35 25 Q50 32 65 25" fill="#cc0000"/>
-    </svg>`
-  },
-  {
-    brand: "Honda",
-    hint: "Japanese giant — stylized H badge",
-    founded: "1948, Japan",
-    svg: `<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="80" fill="#CC0000"/>
-      <!-- H shape -->
-      <rect x="20" y="15" width="14" height="50" fill="#fff"/>
-      <rect x="66" y="15" width="14" height="50" fill="#fff"/>
-      <rect x="20" y="32" width="60" height="16" fill="#fff"/>
-    </svg>`
-  },
-  {
-    brand: "Volkswagen",
-    hint: "German 'People's Car' — VW stacked in a circle",
-    founded: "1937, Wolfsburg",
-    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="48" fill="#003399"/>
-      <circle cx="50" cy="50" r="36" fill="none" stroke="#fff" stroke-width="2"/>
-      <!-- W bottom -->
-      <path d="M24 60 L36 38 L44 52 L50 40 L56 52 L64 38 L76 60" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
-      <!-- V top -->
-      <path d="M36 38 L50 26 L64 38" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
-    </svg>`
-  },
-  {
-    brand: "Maserati",
-    hint: "Italian luxury — trident from Bologna's Neptune fountain",
-    founded: "1914, Bologna",
-    svg: `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-      <!-- Shield -->
-      <path d="M8 8 H92 V90 L50 115 L8 90 Z" fill="#003893"/>
-      <path d="M8 8 H92 V90 L50 115 L8 90 Z" fill="none" stroke="#c8a951" stroke-width="2"/>
-      <!-- Trident -->
-      <line x1="50" y1="20" x2="50" y2="98" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
-      <!-- Left prong -->
-      <path d="M30 20 L30 48 Q30 52 34 52 Q38 52 38 48 L38 35" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
-      <!-- Right prong -->
-      <path d="M70 20 L70 48 Q70 52 66 52 Q62 52 62 48 L62 35" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
-      <!-- Center prong top -->
-      <path d="M46 20 L50 14 L54 20" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
-    </svg>`
-  },
-  {
-    brand: "Bugatti",
-    hint: "French hypercar — red oval with EB initials and macaron dots",
-    founded: "1909, Alsace",
-    svg: `<svg viewBox="0 0 140 80" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="70" cy="40" rx="65" ry="35" fill="#C41E3A"/>
-      <ellipse cx="70" cy="40" rx="55" ry="27" fill="#1c1c1c"/>
-      <!-- EB letters -->
-      <text x="70" y="48" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="26" fill="#C41E3A">EB</text>
-      <!-- Macaron dots top/bottom -->
-      <ellipse cx="70" cy="13" rx="25" ry="5" fill="#C41E3A"/>
-      <ellipse cx="70" cy="67" rx="25" ry="5" fill="#C41E3A"/>
-    </svg>`
-  },
-  {
-    brand: "Bentley",
-    hint: "British ultra-luxury — winged B badge since 1919",
-    founded: "1919, Crewe",
-    svg: `<svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="160" height="80" rx="8" fill="#1c2c4c"/>
-      <!-- Wings left -->
-      <path d="M80 40 C60 20 20 15 8 28 C4 33 8 40 15 40 C30 40 50 34 80 40Z" fill="#C8A951"/>
-      <!-- Wings right -->
-      <path d="M80 40 C100 20 140 15 152 28 C156 33 152 40 145 40 C130 40 110 34 80 40Z" fill="#C8A951"/>
-      <!-- B circle -->
-      <circle cx="80" cy="40" r="20" fill="#1c2c4c" stroke="#C8A951" stroke-width="3"/>
-      <text x="80" y="47" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="22" fill="#C8A951">B</text>
-    </svg>`
-  },
-  {
-    brand: "Rolls-Royce",
-    hint: "British ultra-luxury — Spirit of Ecstasy hood ornament, interlocking RR",
-    founded: "1906, Manchester",
-    svg: `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-      <!-- Background -->
-      <rect width="100" height="120" fill="#1c1c1c"/>
-      <!-- Spirit of Ecstasy (simplified) -->
-      <ellipse cx="50" cy="30" rx="12" ry="14" fill="#c8a951"/>
-      <!-- Wings -->
-      <path d="M38 30 C20 22 10 28 12 36 C14 42 28 40 38 35Z" fill="#c8a951"/>
-      <path d="M62 30 C80 22 90 28 88 36 C86 42 72 40 62 35Z" fill="#c8a951"/>
-      <!-- body/dress shape -->
-      <path d="M40 42 C40 55 45 65 50 68 C55 65 60 55 60 42Z" fill="#c8a951"/>
-      <!-- RR badge -->
-      <rect x="20" y="78" width="60" height="32" rx="4" fill="#c8a951"/>
-      <text x="50" y="100" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="18" fill="#1c1c1c">RR</text>
-    </svg>`
-  }
+  { brand:"BMW",          img: BASE+"bmw-logo.png",           hint:"German luxury — Bayerische Motoren Werke, Munich 1916" },
+  { brand:"Mercedes-Benz",img: BASE+"mercedes-benz-logo.png", hint:"German luxury — three-pointed star represents land, sea and air" },
+  { brand:"Audi",         img: BASE+"audi-logo.png",          hint:"German brand — four rings representing four merged companies" },
+  { brand:"Ferrari",      img: BASE+"ferrari-logo.png",       hint:"Italian supercar — prancing horse on a yellow shield" },
+  { brand:"Lamborghini",  img: BASE+"lamborghini-logo.png",   hint:"Italian supercar — raging bull, named after fighting bulls" },
+  { brand:"Porsche",      img: BASE+"porsche-logo.png",       hint:"German sports car — Stuttgart coat of arms with a horse" },
+  { brand:"Toyota",       img: BASE+"toyota-logo.png",        hint:"Japanese giant — three ellipses representing customer, product and progress" },
+  { brand:"Ford",         img: BASE+"ford-logo.png",          hint:"American icon — blue oval badge, family name since 1903" },
+  { brand:"Volkswagen",   img: BASE+"volkswagen-logo.png",    hint:"German — 'People's Car', VW stacked in a circle" },
+  { brand:"Honda",        img: BASE+"honda-logo.png",         hint:"Japanese — stylized H, founded by Soichiro Honda in 1948" },
+  { brand:"Tesla",        img: BASE+"tesla-logo.png",         hint:"American EV pioneer — T inspired by electric motor cross-section" },
+  { brand:"Chevrolet",    img: BASE+"chevrolet-logo.png",     hint:"American — golden bowtie badge since 1913" },
+  { brand:"Maserati",     img: BASE+"maserati-logo.png",      hint:"Italian luxury — trident from Bologna's Neptune fountain" },
+  { brand:"Bugatti",      img: BASE+"bugatti-logo.png",       hint:"French hypercar — EB initials for Ettore Bugatti, founded 1909" },
+  { brand:"Bentley",      img: BASE+"bentley-logo.png",       hint:"British luxury — winged B badge, hand-built in Crewe since 1919" },
+  { brand:"Rolls-Royce",  img: BASE+"rolls-royce-logo.png",   hint:"British ultra-luxury — Spirit of Ecstasy hood ornament since 1906" },
 ];
 
+// ── GAME ───────────────────────────────────────────────────────────────────
 const ROUND = 12;
 let questions=[], cur=0, score=0, correct=0;
+let countdownTimer=null, llRevealUsed=false, llFiftyUsed=false;
 const getBest = () => parseInt(localStorage.getItem('car-best')||'0');
 
-function shuffle(a){return [...a].sort(()=>Math.random()-0.5);}
-function getWrong(correct, all){return shuffle(all.filter(c=>c.brand!==correct.brand)).slice(0,3).map(c=>c.brand);}
+function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
+
+function getWrong(q, all){
+  return shuffle(all.filter(c=>c.brand!==q.brand)).slice(0,3).map(c=>c.brand);
+}
 
 function startGame(){
-  questions=shuffle(CARS).slice(0,ROUND);
-  cur=0;score=0;correct=0;
-  document.getElementById('best').textContent=getBest();
-  document.getElementById('screen-over').style.display='none';
-  document.getElementById('screen-game').style.display='block';
+  questions = shuffle(CARS).slice(0, ROUND);
+  cur=0; score=0; correct=0;
+  llRevealUsed=false; llFiftyUsed=false;
+  document.getElementById('best').textContent = getBest();
+  document.getElementById('screen-over').style.display = 'none';
+  document.getElementById('screen-game').style.display = 'block';
   resetLifelines();
   loadQ();
 }
 
-let llRevealUsed=false, llFiftyUsed=false;
 function resetLifelines(){
-  llRevealUsed=false; llFiftyUsed=false;
-  document.getElementById('ll-reveal').disabled=false;
-  document.getElementById('ll-fifty').disabled=false;
-  document.getElementById('ll-skip').disabled=false;
+  llRevealUsed = false; llFiftyUsed = false;
+  document.getElementById('ll-reveal').disabled = false;
+  document.getElementById('ll-fifty').disabled = false;
+  document.getElementById('ll-skip').disabled = false;
 }
 
 function loadQ(){
-  const q=questions[cur];
-  document.getElementById('qnum').textContent=`${cur+1}/${ROUND}`;
-  document.getElementById('score').textContent=score;
-  document.getElementById('feedback').textContent='';
-  document.getElementById('feedback').className='feedback';
-  document.getElementById('prog').style.width=`${(cur/ROUND)*100}%`;
-  document.getElementById('brand-hint').textContent='Identify the brand';
+  const q = questions[cur];
+  document.getElementById('qnum').textContent = `${cur+1}/${ROUND}`;
+  document.getElementById('score').textContent = score;
+  document.getElementById('prog').style.width = `${(cur/ROUND)*100}%`;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('brand-hint').textContent = 'Logo reveals in a moment...';
+  document.getElementById('brand-hint').style.color = '';
 
-  // render logo blurred
-  const display=document.getElementById('logo-display');
-  display.innerHTML=q.svg;
-  display.className='logo-display blurred';
+  // Set logo — start blurred
+  const img = document.getElementById('logo-img');
+  img.src = q.img;
+  img.className = 'logo-img blurred';
 
-  // reveal after 1.2s
-  setTimeout(()=>display.classList.remove('blurred'), 1200);
+  // Countdown: 3, 2, 1, reveal
+  const cd = document.getElementById('countdown');
+  cd.classList.remove('hidden');
+  let count = 3;
+  cd.textContent = count;
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(()=>{
+    count--;
+    if(count > 0){ cd.textContent = count; }
+    else {
+      clearInterval(countdownTimer);
+      cd.classList.add('hidden');
+      img.className = 'logo-img revealed';
+      document.getElementById('brand-hint').textContent = 'Which brand is this?';
+    }
+  }, 800);
 
-  // options
-  const opts=shuffle([q.brand,...getWrong(q,CARS)]);
-  const letters=['A','B','C','D'];
-  const container=document.getElementById('options');
-  container.innerHTML='';
-  opts.forEach((opt,i)=>{
-    const btn=document.createElement('button');
-    btn.className='opt';
-    btn.innerHTML=`<span class="opt-letter">${letters[i]}</span>${opt}`;
-    btn.dataset.brand=opt;
-    btn.addEventListener('click',()=>answer(btn,opt,q));
+  // Build answer options immediately
+  const opts = shuffle([q.brand, ...getWrong(q, CARS)]);
+  const letters = ['A','B','C','D'];
+  const container = document.getElementById('options');
+  container.innerHTML = '';
+  opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}`;
+    btn.dataset.brand = opt;
+    btn.addEventListener('click', () => answer(btn, opt, q));
     container.appendChild(btn);
   });
 }
 
 function answer(btn, chosen, q){
-  document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
-  document.getElementById('logo-display').classList.remove('blurred');
-  const card=document.getElementById('logo-card');
-  const fb=document.getElementById('feedback');
-  const msgs_good=["Recognized it! 🎯","That's a car person!","Easy for you 🔥","Let's go!","No hesitation!"];
-  const msgs_bad=[`That's ${q.brand}. Rookie mistake 😅`,`${q.brand} was right there bro`,`${q.brand} — remember the badge!`,`Nope. ${q.brand}. Keep studying.`];
+  clearInterval(countdownTimer);
+  document.getElementById('countdown').classList.add('hidden');
+  document.getElementById('logo-img').className = 'logo-img revealed';
+  document.querySelectorAll('.opt').forEach(b => b.disabled = true);
 
-  if(chosen===q.brand){
+  const card = document.getElementById('logo-card');
+  const fb = document.getElementById('feedback');
+  const hint = document.getElementById('brand-hint');
+
+  const msgs_good = ["Recognized it! 🎯","That's a car person!","No hesitation 🔥","Easy money.","Petrolhead energy!"];
+  const msgs_bad = [`Nope — that's ${q.brand} 😅`,`${q.brand} was right there bro`,`${q.brand}. Study the badges.`,`Not even close. It's ${q.brand}.`];
+
+  if(chosen === q.brand){
     btn.classList.add('correct');
-    score+=10; correct++;
+    score += 10; correct++;
     sfxCorrect();
     card.classList.add('correct-flash');
-    setTimeout(()=>card.classList.remove('correct-flash'),500);
-    fb.className='feedback good';
-    fb.textContent=msgs_good[Math.floor(Math.random()*msgs_good.length)];
-    document.getElementById('brand-hint').textContent=q.hint;
+    setTimeout(()=>card.classList.remove('correct-flash'), 500);
+    fb.className = 'feedback good';
+    fb.textContent = msgs_good[Math.floor(Math.random()*msgs_good.length)];
+    hint.textContent = q.hint;
+    hint.style.color = 'rgba(255,255,255,0.7)';
   } else {
     btn.classList.add('wrong');
-    document.querySelectorAll('.opt').forEach(b=>{if(b.dataset.brand===q.brand)b.classList.add('correct');});
+    document.querySelectorAll('.opt').forEach(b => {
+      if(b.dataset.brand === q.brand) b.classList.add('correct');
+    });
     sfxWrong();
     card.classList.add('wrong-flash');
-    setTimeout(()=>card.classList.remove('wrong-flash'),450);
-    fb.className='feedback bad';
-    fb.textContent=msgs_bad[Math.floor(Math.random()*msgs_bad.length)];
-    document.getElementById('brand-hint').textContent=q.hint;
+    setTimeout(()=>card.classList.remove('wrong-flash'), 450);
+    fb.className = 'feedback bad';
+    fb.textContent = msgs_bad[Math.floor(Math.random()*msgs_bad.length)];
+    hint.textContent = q.hint;
+    hint.style.color = 'rgba(255,255,255,0.5)';
   }
-  document.getElementById('score').textContent=score;
-  setTimeout(next,2000);
+  document.getElementById('score').textContent = score;
+  setTimeout(next, 2200);
 }
 
 function next(){
   cur++;
-  if(cur>=questions.length) endGame();
-  else { resetLifelinesPerQ(); loadQ(); }
-}
-
-function resetLifelinesPerQ(){
-  // lifelines are per-game, not per-question - don't reset
+  if(cur >= questions.length) endGame();
+  else loadQ();
 }
 
 function endGame(){
-  document.getElementById('screen-game').style.display='none';
-  document.getElementById('screen-over').style.display='block';
-  const prev=getBest();
-  if(score>prev)localStorage.setItem('car-best',score);
-  const best=Math.max(prev,score);
-  document.getElementById('res-score').textContent=score;
-  document.getElementById('res-correct').textContent=`${correct}/${ROUND}`;
-  document.getElementById('res-best').textContent=best;
-  document.getElementById('prog').style.width='100%';
+  clearInterval(countdownTimer);
+  document.getElementById('screen-game').style.display = 'none';
+  document.getElementById('screen-over').style.display = 'block';
+  const prev = getBest();
+  if(score > prev) localStorage.setItem('car-best', score);
+  const best = Math.max(prev, score);
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-correct').textContent = `${correct}/${ROUND}`;
+  document.getElementById('res-best').textContent = best;
+  document.getElementById('prog').style.width = '100%';
 
-  const pct=correct/ROUND;
+  const pct = correct/ROUND;
   let emoji,title,sub;
-  if(pct>=0.9){emoji='🏆';title='Petrolhead certified!';sub='You clearly spend too much time on YouTube watching car videos. Respect.';sfxWin();launchConfetti();}
-  else if(pct>=0.6){emoji='🚀';title='Solid car knowledge!';sub='You know your badges. A few exotics caught you out but you held your own.'}
-  else if(pct>=0.3){emoji='🚗';title='Getting there...';sub='Some of those are tricky. Study up on the European brands especially.'}
-  else{emoji='😅';title='Maybe stick to walking?';sub='It\'s okay. Not everyone needs to know what a Maserati badge looks like. But now you do.'}
-  document.getElementById('over-emoji').textContent=emoji;
-  document.getElementById('over-title').textContent=title;
-  document.getElementById('over-sub').textContent=sub;
+  if(pct >= 0.9){ emoji='🏆'; title='Petrolhead certified!'; sub='You clearly spend too much time watching Top Gear. Respect.'; sfxWin(); launchConfetti(); }
+  else if(pct >= 0.6){ emoji='🚀'; title='Solid car knowledge!'; sub='You know your badges. A few exotics caught you out but you held your own.'; }
+  else if(pct >= 0.3){ emoji='🚗'; title='Getting there...'; sub='Some of those are genuinely tricky. Study up on the European marques.'; }
+  else { emoji='😅'; title='Maybe stick to public transit?'; sub='It\'s okay. Not everyone grew up reading car magazines. But now you will.'; }
+  document.getElementById('over-emoji').textContent = emoji;
+  document.getElementById('over-title').textContent = title;
+  document.getElementById('over-sub').textContent = sub;
 }
 
-// Lifelines
-document.getElementById('ll-reveal').addEventListener('click',()=>{
-  if(llRevealUsed)return;
-  llRevealUsed=true;
-  document.getElementById('ll-reveal').disabled=true;
-  document.getElementById('logo-display').classList.remove('blurred');
-  document.getElementById('brand-hint').textContent=questions[cur].hint;
+// ── LIFELINES ──────────────────────────────────────────────────────────────
+document.getElementById('ll-reveal').addEventListener('click', () => {
+  if(llRevealUsed) return;
+  llRevealUsed = true;
+  document.getElementById('ll-reveal').disabled = true;
+  clearInterval(countdownTimer);
+  document.getElementById('countdown').classList.add('hidden');
+  document.getElementById('logo-img').className = 'logo-img revealed';
+  document.getElementById('brand-hint').textContent = questions[cur].hint;
+  document.getElementById('brand-hint').style.color = 'rgba(255,255,255,0.7)';
 });
-document.getElementById('ll-fifty').addEventListener('click',()=>{
-  if(llFiftyUsed)return;
-  llFiftyUsed=true;
-  document.getElementById('ll-fifty').disabled=true;
-  const correct=questions[cur].brand;
-  const opts=document.querySelectorAll('.opt');
-  let removed=0;
-  opts.forEach(b=>{if(b.dataset.brand!==correct&&removed<2){b.disabled=true;b.style.opacity='0.25';removed++;}});
+
+document.getElementById('ll-fifty').addEventListener('click', () => {
+  if(llFiftyUsed) return;
+  llFiftyUsed = true;
+  document.getElementById('ll-fifty').disabled = true;
+  const correct = questions[cur].brand;
+  const opts = document.querySelectorAll('.opt');
+  let removed = 0;
+  opts.forEach(b => {
+    if(b.dataset.brand !== correct && removed < 2){
+      b.disabled = true;
+      b.style.opacity = '0.2';
+      removed++;
+    }
+  });
 });
-document.getElementById('ll-skip').addEventListener('click',()=>{
-  document.getElementById('ll-skip').disabled=true;
+
+document.getElementById('ll-skip').addEventListener('click', () => {
+  clearInterval(countdownTimer);
+  document.getElementById('ll-skip').disabled = true;
   next();
 });
-document.getElementById('btn-restart').addEventListener('click',startGame);
+
+document.getElementById('btn-restart').addEventListener('click', startGame);
 
 startGame();
 </script>
