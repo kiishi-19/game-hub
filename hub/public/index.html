@@ -4,86 +4,380 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Game Hub</title>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 1.5rem 3rem;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 0.3rem 0.9rem;
+      background: rgba(139,92,246,0.2);
+      border: 1px solid rgba(139,92,246,0.4);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #c4b5fd;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #fff 30%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      color: rgba(255,255,255,0.5);
+      font-size: 1.05rem;
+      max-width: 400px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+
+    .game-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+      animation: blink 2s ease infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── GRID ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem 5rem;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ── CARD ── */
+    .game-card {
+      position: relative;
+      border-radius: 20px;
+      padding: 1.75rem;
+      text-decoration: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    .game-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.01);
+    }
+
+    /* per-game gradients */
+    .card-flags   { background: linear-gradient(135deg, #0f2027 0%, #0d3b5e 50%, #0a5c8a 100%); }
+    .card-flags:hover   { box-shadow: 0 20px 60px rgba(10,92,138,0.5); }
+
+    .card-spelling { background: linear-gradient(135deg, #1a0533 0%, #4c1d95 50%, #7c3aed 100%); }
+    .card-spelling:hover { box-shadow: 0 20px 60px rgba(124,58,237,0.5); }
+
+    .card-carlogo { background: linear-gradient(135deg, #1f0a0a 0%, #7f1d1d 50%, #dc2626 100%); }
+    .card-carlogo:hover { box-shadow: 0 20px 60px rgba(220,38,38,0.5); }
+
+    .card-speedmath { background: linear-gradient(135deg, #0f1a0a 0%, #14532d 50%, #16a34a 100%); }
+    .card-speedmath:hover { box-shadow: 0 20px 60px rgba(22,163,74,0.5); }
+
+    .card-wordmeaning { background: linear-gradient(135deg, #0f0a1a 0%, #1e1b4b 50%, #4338ca 100%); }
+    .card-wordmeaning:hover { box-shadow: 0 20px 60px rgba(67,56,202,0.5); }
+
+    .card-crossword { background: linear-gradient(135deg, #1a100a 0%, #7c2d12 50%, #ea580c 100%); }
+    .card-crossword:hover { box-shadow: 0 20px 60px rgba(234,88,12,0.5); }
+
+    /* card noise texture */
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 200px;
+      pointer-events: none;
+      border-radius: 20px;
+    }
+
+    /* glow orb */
+    .game-card::after {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .card-icon {
+      font-size: 2.8rem;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-body {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-body h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-body p {
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      background: rgba(255,255,255,0.12);
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .play-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.15);
+      border-radius: 99px;
+      padding: 0.4rem 0.9rem;
+      transition: background 0.15s;
+    }
+
+    .game-card:hover .play-btn {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: rgba(255,255,255,0.25);
+      font-size: 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    footer a { color: rgba(255,255,255,0.4); text-decoration: none; }
+    footer a:hover { color: rgba(255,255,255,0.7); }
+
+    @media (max-width: 480px) {
+      .games-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2.4rem; }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <h1>Game Hub</h1>
-      <p class="tagline">A growing collection of browser games</p>
+
+  <div class="hero">
+    <div class="hero-badge">🎮 Game Hub</div>
+    <h1>Play. Learn.<br>Get better.</h1>
+    <p>A growing collection of games built to make you smarter without feeling like work.</p>
+    <div class="game-count">
+      <span class="dot"></span>
+      6 games live
     </div>
-  </header>
+  </div>
 
   <main>
-    <div class="games-grid">
+    <div class="games-grid" id="grid">
 
-      <a class="game-card" href="https://flags-of-the-world.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
+      <a class="game-card card-flags" href="https://flags-of-the-world.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
         <div class="card-icon">🌍</div>
         <div class="card-body">
           <h2>Flags of the World</h2>
-          <p>Test your knowledge of world flags. How many countries can you identify?</p>
-          <span class="tag">Geography</span>
+          <p>How many countries can you identify from their flag? Geography knowledge gets tested hard here.</p>
         </div>
-        <div class="card-footer">Play now →</div>
+        <div class="card-footer">
+          <span class="tag">Geography</span>
+          <span class="play-btn">Play now →</span>
+        </div>
       </a>
 
-      <a class="game-card" href="https://game-hub-spelling.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
+      <a class="game-card card-spelling" href="https://game-hub-spelling.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
         <div class="card-icon">✏️</div>
         <div class="card-body">
           <h2>Spelling Challenge</h2>
-          <p>Hear a word, spell it correctly. Level up your spelling one word at a time.</p>
-          <span class="tag">Language</span>
+          <p>You hear it. You spell it. Sounds easy until you're staring at "conscientious" with 3 lives left.</p>
         </div>
-        <div class="card-footer">Play now →</div>
+        <div class="card-footer">
+          <span class="tag">Language</span>
+          <span class="play-btn">Play now →</span>
+        </div>
       </a>
 
-      <a class="game-card" href="https://game-hub-car-logo.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
+      <a class="game-card card-carlogo" href="https://game-hub-car-logo.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
         <div class="card-icon">🚗</div>
         <div class="card-body">
           <h2>Car Logo Quiz</h2>
-          <p>Identify car brands from their logos. From everyday to exotic.</p>
-          <span class="tag">Cars</span>
+          <p>From everyday to exotic — recognize car brands by their logo alone. Petrolheads eat well here.</p>
         </div>
-        <div class="card-footer">Play now →</div>
+        <div class="card-footer">
+          <span class="tag">Cars</span>
+          <span class="play-btn">Play now →</span>
+        </div>
       </a>
 
-      <a class="game-card" href="https://game-hub-speed-math.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
+      <a class="game-card card-speedmath" href="https://game-hub-speed-math.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
         <div class="card-icon">⚡</div>
         <div class="card-body">
           <h2>Speed Math</h2>
-          <p>Solve as many math problems as you can before the clock runs out.</p>
-          <span class="tag">Math</span>
+          <p>60 seconds. As many problems as you can solve. The clock doesn't care about your feelings.</p>
         </div>
-        <div class="card-footer">Play now →</div>
+        <div class="card-footer">
+          <span class="tag">Math</span>
+          <span class="play-btn">Play now →</span>
+        </div>
       </a>
 
-      <a class="game-card" href="https://game-hub-word-meaning.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
+      <a class="game-card card-wordmeaning" href="https://game-hub-word-meaning.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
         <div class="card-icon">📖</div>
         <div class="card-body">
           <h2>Word Meaning</h2>
-          <p>Match words to their definitions. Expand your vocabulary every round.</p>
-          <span class="tag">Vocabulary</span>
+          <p>Match big words to their definitions. You'll actually start using them in real life. Trust.</p>
         </div>
-        <div class="card-footer">Play now →</div>
+        <div class="card-footer">
+          <span class="tag">Vocabulary</span>
+          <span class="play-btn">Play now →</span>
+        </div>
       </a>
 
-      <a class="game-card" href="https://game-hub-crossword.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
+      <a class="game-card card-crossword" href="https://game-hub-crossword.kiishiogunbiyi.workers.dev" target="_blank" rel="noopener">
         <div class="card-icon">🔲</div>
         <div class="card-body">
           <h2>Crossword Puzzle</h2>
-          <p>Classic crossword puzzles. Fill in the grid using the clues provided.</p>
-          <span class="tag">Puzzle</span>
+          <p>Classic crossword, modern feel. Fill the grid from clues across and down. Satisfying when it clicks.</p>
         </div>
-        <div class="card-footer">Play now →</div>
+        <div class="card-footer">
+          <span class="tag">Puzzle</span>
+          <span class="play-btn">Play now →</span>
+        </div>
       </a>
 
     </div>
   </main>
 
   <footer>
-    <p>Built on <a href="https://workers.cloudflare.com" target="_blank" rel="noopener">Cloudflare Workers</a></p>
+    Built on <a href="https://workers.cloudflare.com" target="_blank">Cloudflare Workers</a> &nbsp;·&nbsp; <a href="https://github.com/kiishi-19/game-hub" target="_blank">GitHub</a>
   </footer>
 
-  <script src="main.js"></script>
+  <script>
+    // Staggered card entrance
+    const cards = document.querySelectorAll('.game-card');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    cards.forEach(c => observer.observe(c));
+
+    // Tilt effect on hover
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform = `translateY(-6px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg) scale(1.01)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  </script>
 </body>
 </html>

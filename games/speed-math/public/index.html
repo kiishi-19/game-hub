@@ -5,273 +5,356 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Speed Math</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f0f13; --surface: #1a1a24; --border: #2a2a3a;
-      --accent: #f6821f; --text: #e8e8f0; --text-muted: #888899;
-      --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+      --bg: #020f05; --surface: #051a09; --border: rgba(22,163,74,0.25);
+      --accent: #16a34a; --accent2: #4ade80;
+      --text: #f0fff4; --muted: rgba(255,255,255,0.45);
+      --red: #f43f5e; --yellow: #fbbf24; --blue: #38bdf8;
     }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
-    .back { position: fixed; top: 1rem; left: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
-    .back:hover { color: var(--accent); }
-    .game { width: 100%; max-width: 480px; text-align: center; }
-    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
-    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 1.5rem;
+      background-image: radial-gradient(ellipse at top, rgba(22,163,74,0.12) 0%, transparent 60%);
+      overflow: hidden;
+    }
+    .back{position:fixed;top:1rem;left:1rem;color:var(--muted);text-decoration:none;font-size:0.8rem;transition:color 0.15s;z-index:10;}
+    .back:hover{color:var(--accent2);}
 
-    /* Start screen */
-    #start-screen { }
-    .difficulty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-    .diff-btn { background: var(--surface); border: 2px solid var(--border); border-radius: 10px; padding: 1rem 0.5rem; cursor: pointer; color: var(--text); transition: border-color 0.15s; }
-    .diff-btn:hover { border-color: var(--accent); }
-    .diff-btn.selected { border-color: var(--accent); background: rgba(246,130,31,0.1); }
-    .diff-btn h3 { font-size: 1rem; margin-bottom: 0.25rem; }
-    .diff-btn p { font-size: 0.75rem; color: var(--text-muted); }
-    #btn-start { width: 100%; padding: 1rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .game{width:100%;max-width:480px;}
+    .header{text-align:center;margin-bottom:2rem;}
+    .header h1{font-size:2rem;font-weight:900;letter-spacing:-0.03em;}
+    .header h1 span{background:linear-gradient(135deg,#4ade80,#16a34a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .header p{color:var(--muted);font-size:0.875rem;margin-top:0.3rem;}
 
-    /* Game screen */
-    #game-screen { display: none; }
-    .hud { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; }
-    .hud-item { text-align: center; }
-    .hud-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .hud-val { font-size: 1.4rem; font-weight: 800; }
-    #timer-val { color: var(--accent); }
-    #timer-val.urgent { color: var(--red); animation: pulse 0.5s infinite alternate; }
-    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+    /* start screen */
+    #screen-start{}
+    .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.5rem;}
+    .diff-btn{
+      background:var(--surface);border:2px solid var(--border);border-radius:14px;
+      padding:1.25rem 0.5rem;cursor:pointer;color:var(--text);
+      transition:all 0.15s;font-family:'Inter',sans-serif;
+    }
+    .diff-btn:hover{border-color:var(--accent);transform:translateY(-2px);}
+    .diff-btn.selected{border-color:var(--accent2);background:rgba(74,222,128,0.1);box-shadow:0 0 20px rgba(74,222,128,0.2);}
+    .diff-btn h3{font-size:1rem;font-weight:800;margin-bottom:0.3rem;}
+    .diff-btn p{font-size:0.7rem;color:var(--muted);line-height:1.4;}
+    .diff-btn .diff-emoji{font-size:1.5rem;margin-bottom:0.4rem;}
+    .start-btn{width:100%;padding:1rem;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;border:none;border-radius:12px;font-size:1.05rem;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;letter-spacing:-0.01em;}
+    .start-btn:hover{box-shadow:0 4px 24px rgba(22,163,74,0.5);transform:translateY(-1px);}
 
-    .timer-bar { height: 6px; background: var(--border); border-radius: 99px; margin-bottom: 1.5rem; overflow: hidden; }
-    .timer-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.1s linear, background 0.3s; }
+    /* game screen */
+    #screen-game{display:none;}
+    .hud{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.85rem 1.25rem;margin-bottom:0.75rem;}
+    .hud-item{text-align:center;}
+    .hud-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.2rem;}
+    .hud-val{font-size:1.3rem;font-weight:800;}
 
-    .problem-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; margin-bottom: 1rem; }
-    .problem { font-size: 3rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
-    .op-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    /* timer */
+    .timer-wrap{position:relative;margin-bottom:1.25rem;}
+    .timer-bar{height:8px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;}
+    .timer-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:99px;transition:width 0.1s linear,background 0.5s;}
+    .timer-fill.urgent{background:linear-gradient(90deg,#f43f5e,#f97316);}
 
-    input#answer { width: 100%; padding: 1rem; border-radius: 8px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-size: 1.5rem; font-weight: 700; text-align: center; outline: none; transition: border-color 0.15s; margin-bottom: 0.75rem; }
-    input#answer:focus { border-color: var(--accent); }
-    input#answer.correct { border-color: var(--green); background: rgba(34,197,94,0.08); }
-    input#answer.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); }
+    /* problem */
+    .problem-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:20px;padding:2.5rem 2rem;margin-bottom:0.75rem;
+      text-align:center;position:relative;overflow:hidden;
+      transition:border-color 0.2s;
+    }
+    .problem-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.6;}
+    .problem-card.correct-flash{animation:cFlash 0.3s ease;}
+    .problem-card.wrong-flash{animation:shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97);border-color:var(--red);}
+    @keyframes cFlash{0%{background:var(--surface)}40%{background:rgba(74,222,128,0.15)}100%{background:var(--surface)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-5px)}60%{transform:translateX(5px)}75%{transform:translateX(-3px)}90%{transform:translateX(3px)}}
 
-    .feedback { height: 1.5rem; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .feedback.correct { color: var(--green); }
-    .feedback.wrong { color: var(--red); }
+    .problem{font-size:3.5rem;font-weight:900;letter-spacing:-0.03em;line-height:1;margin-bottom:0.5rem;}
+    .op-badge{display:inline-block;padding:0.2rem 0.65rem;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.2);border-radius:99px;font-size:0.7rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:0.08em;}
 
-    #streak-display { font-size: 0.85rem; color: var(--text-muted); }
-    #streak-display span { color: var(--yellow); font-weight: 700; }
+    /* floating score popup */
+    .score-popup{
+      position:fixed;font-size:1.8rem;font-weight:900;
+      pointer-events:none;z-index:200;
+      animation:floatUp 0.8s ease forwards;
+    }
+    .score-popup.good{color:var(--accent2);}
+    .score-popup.bad{color:var(--red);}
+    @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.4)}}
 
-    /* Game over */
-    #game-over { display: none; }
-    #game-over h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; }
-    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1.5rem 0; }
-    .result-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
-    .result-item .val { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
-    .result-item .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
-    #btn-play-again { width: 100%; padding: 1rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 0.75rem; }
-    #btn-menu { width: 100%; padding: 0.85rem; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    /* combo display */
+    .combo-display{
+      position:absolute;top:0.75rem;right:0.75rem;
+      font-size:0.85rem;font-weight:800;
+      padding:0.2rem 0.6rem;border-radius:99px;
+      background:linear-gradient(135deg,#f59e0b,#f97316);
+      color:#fff;
+      display:none;
+    }
+    .combo-display.show{display:inline-block;animation:popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);}
+    @keyframes popIn{0%{transform:scale(0.7)}100%{transform:scale(1)}}
+
+    input#answer{
+      width:100%;padding:1rem 1.2rem;
+      background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.1);
+      border-radius:12px;color:var(--text);
+      font-size:1.5rem;font-weight:800;text-align:center;outline:none;
+      transition:border-color 0.15s,background 0.15s;font-family:'Inter',sans-serif;
+      margin-bottom:0.5rem;
+    }
+    input#answer:focus{border-color:var(--accent);background:rgba(22,163,74,0.06);}
+    input#answer.flash-green{border-color:var(--accent2);background:rgba(74,222,128,0.1);}
+    input#answer.flash-red{border-color:var(--red);background:rgba(244,63,94,0.08);}
+
+    .hint-bar{text-align:center;font-size:0.8rem;color:var(--muted);}
+    .hint-bar span{color:var(--accent2);font-weight:700;}
+
+    /* game over */
+    #screen-over{display:none;text-align:center;}
+    .over-emoji{font-size:4rem;margin-bottom:0.75rem;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+    .over-title{font-size:2.2rem;font-weight:900;letter-spacing:-0.03em;margin-bottom:0.5rem;}
+    .over-sub{color:var(--muted);margin-bottom:2rem;font-size:0.9rem;line-height:1.5;}
+    .result-chips{display:flex;gap:0.75rem;justify-content:center;margin-bottom:2rem;flex-wrap:wrap;}
+    .chip{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;text-align:center;}
+    .chip-val{font-size:1.8rem;font-weight:900;color:var(--accent2);}
+    .chip-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-top:0.2rem;}
+    .btn-row{display:flex;gap:0.75rem;max-width:320px;margin:0 auto;}
+    .btn{flex:1;padding:0.9rem;border-radius:10px;border:none;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+    .btn-primary{background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;}
+    .btn-primary:hover{box-shadow:0 4px 20px rgba(22,163,74,0.5);}
+    .btn-secondary{background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid rgba(255,255,255,0.1);}
+
+    #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:100;}
   </style>
 </head>
 <body>
-  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Game Hub</a>
+  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Hub</a>
+  <canvas id="confetti-canvas"></canvas>
 
   <div class="game">
-    <h1>⚡ Speed Math</h1>
-    <p class="subtitle">Solve as many problems as you can in 60 seconds</p>
+    <div class="header">
+      <h1>⚡ <span>Speed Math</span></h1>
+      <p>60 seconds. The clock doesn't care about your feelings.</p>
+    </div>
 
-    <div id="start-screen">
-      <div class="difficulty-grid">
+    <div id="screen-start">
+      <div class="diff-grid">
         <button class="diff-btn selected" data-diff="easy">
+          <div class="diff-emoji">😌</div>
           <h3>Easy</h3>
-          <p>+/- up to 20</p>
+          <p>+/− up to 20. Warm up your brain.</p>
         </button>
         <button class="diff-btn" data-diff="medium">
+          <div class="diff-emoji">😤</div>
           <h3>Medium</h3>
-          <p>×/÷ up to 12</p>
+          <p>Times tables + bigger numbers.</p>
         </button>
         <button class="diff-btn" data-diff="hard">
+          <div class="diff-emoji">🤯</div>
           <h3>Hard</h3>
-          <p>Mixed, bigger nums</p>
+          <p>All ops. Big numbers. No mercy.</p>
         </button>
       </div>
-      <button id="btn-start">Start Game</button>
+      <button class="start-btn" id="btn-start">Start — 60 seconds</button>
     </div>
 
-    <div id="game-screen">
+    <div id="screen-game">
       <div class="hud">
-        <div class="hud-item">
-          <div class="hud-label">Score</div>
-          <div class="hud-val" id="score-val">0</div>
-        </div>
-        <div class="hud-item">
-          <div class="hud-label">Time</div>
-          <div class="hud-val" id="timer-val">60</div>
-        </div>
-        <div class="hud-item">
-          <div class="hud-label">Correct</div>
-          <div class="hud-val" id="correct-val">0</div>
-        </div>
+        <div class="hud-item"><div class="hud-label">Score</div><div class="hud-val" id="score" style="color:var(--accent2)">0</div></div>
+        <div class="hud-item"><div class="hud-label">Time</div><div class="hud-val" id="timer" style="color:var(--accent2)">60</div></div>
+        <div class="hud-item"><div class="hud-label">Correct</div><div class="hud-val" id="correct-count" style="color:var(--muted)">0</div></div>
       </div>
-      <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
-      <div class="problem-card">
+
+      <div class="timer-wrap">
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+      </div>
+
+      <div class="problem-card" id="problem-card">
+        <span class="combo-display" id="combo">🔥 x3</span>
         <div class="problem" id="problem">—</div>
-        <div class="op-label" id="op-label"></div>
+        <div class="op-badge" id="op-badge">—</div>
       </div>
-      <div class="feedback" id="feedback"></div>
+
       <input type="number" id="answer" placeholder="?" autocomplete="off" />
-      <div id="streak-display">Streak: <span id="streak-val">0</span> 🔥</div>
+      <div class="hint-bar">Press <span>Enter</span> to submit &nbsp;·&nbsp; Streak bonus kicks in at <span>3x</span></div>
     </div>
 
-    <div id="game-over">
-      <h2 id="go-title">Time's Up!</h2>
-      <div class="result-grid">
-        <div class="result-item"><div class="val" id="res-score">0</div><div class="label">Score</div></div>
-        <div class="result-item"><div class="val" id="res-correct">0</div><div class="label">Correct</div></div>
-        <div class="result-item"><div class="val" id="res-best">0</div><div class="label">Best</div></div>
+    <div id="screen-over">
+      <div class="over-emoji" id="over-emoji">⏱</div>
+      <div class="over-title" id="over-title">Time's up!</div>
+      <div class="over-sub" id="over-sub"></div>
+      <div class="result-chips">
+        <div class="chip"><div class="chip-val" id="res-score">0</div><div class="chip-label">Score</div></div>
+        <div class="chip"><div class="chip-val" id="res-correct">0</div><div class="chip-label">Correct</div></div>
+        <div class="chip"><div class="chip-val" id="res-speed">0</div><div class="chip-label">Per min</div></div>
+        <div class="chip"><div class="chip-val" id="res-best">0</div><div class="chip-label">Best</div></div>
       </div>
-      <button id="btn-play-again">Play Again</button>
-      <button id="btn-menu">Change Difficulty</button>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="btn-menu">Change Mode</button>
+        <button class="btn btn-primary" id="btn-restart">Play Again</button>
+      </div>
     </div>
   </div>
 
-  <script>
-    const DURATION = 60;
-    let difficulty = "easy";
-    let timer, timeLeft, score, correct, streak, currentAnswer;
+<script>
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function playTone(f,t,d,v=0.3,delay=0){const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime+delay);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+delay+d);o.start(AC.currentTime+delay);o.stop(AC.currentTime+delay+d+0.05);}
+function sfxCorrect(streak){if(streak>=5)playTone(880,'sine',0.06,0.25);else if(streak>=3)playTone(660,'sine',0.08,0.2);else playTone(523,'sine',0.08,0.15);}
+function sfxWrong(){playTone(180,'sawtooth',0.12,0.2);}
+function sfxTick(){playTone(440,'sine',0.04,0.05);}
+function sfxWin(){[523,659,784,1047].forEach((f,i)=>playTone(f,'sine',0.15,0.25,i*0.1));}
 
-    const diffBtns = document.querySelectorAll(".diff-btn");
-    diffBtns.forEach(b => {
-      b.addEventListener("click", () => {
-        diffBtns.forEach(x => x.classList.remove("selected"));
-        b.classList.add("selected");
-        difficulty = b.dataset.diff;
-      });
-    });
+const canvas=document.getElementById('confetti-canvas');const ctx=canvas.getContext('2d');let particles=[];
+function launchConfetti(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;for(let i=0;i<120;i++){particles.push({x:Math.random()*canvas.width,y:-10,vx:(Math.random()-0.5)*6,vy:Math.random()*4+2,w:Math.random()*10+4,h:Math.random()*5+3,rot:Math.random()*360,vr:(Math.random()-0.5)*8,color:['#4ade80','#16a34a','#fbbf24','#f43f5e','#38bdf8','#a78bfa'][Math.floor(Math.random()*6)],alpha:1});}requestAnimationFrame(animateConfetti);}
+function animateConfetti(){ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>p.alpha>0.05);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;if(p.y>canvas.height*0.7)p.alpha-=0.02;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();});if(particles.length)requestAnimationFrame(animateConfetti);}
 
-    function genProblem() {
-      let a, b, op, answer;
-      const ops = difficulty === "easy" ? ["+", "-"]
-                : difficulty === "medium" ? ["+", "-", "×", "÷"]
-                : ["+", "-", "×", "÷"];
+const DURATION=60;
+let diff='easy',timerInterval,timeLeft,score,correctCount,streak,bestStreak,currentAnswer;
 
-      op = ops[Math.floor(Math.random() * ops.length)];
+const diffBtns=document.querySelectorAll('.diff-btn');
+diffBtns.forEach(b=>{
+  b.addEventListener('click',()=>{
+    diffBtns.forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    diff=b.dataset.diff;
+  });
+});
 
-      if (difficulty === "easy") {
-        a = Math.floor(Math.random() * 20) + 1;
-        b = Math.floor(Math.random() * 20) + 1;
-        if (op === "-" && b > a) [a, b] = [b, a];
-        answer = op === "+" ? a + b : a - b;
-      } else if (difficulty === "medium") {
-        if (op === "×" || op === "÷") {
-          b = Math.floor(Math.random() * 12) + 1;
-          a = op === "÷" ? b * (Math.floor(Math.random() * 12) + 1) : Math.floor(Math.random() * 12) + 1;
-          answer = op === "×" ? a * b : a / b;
-        } else {
-          a = Math.floor(Math.random() * 50) + 1;
-          b = Math.floor(Math.random() * 50) + 1;
-          if (op === "-" && b > a) [a, b] = [b, a];
-          answer = op === "+" ? a + b : a - b;
-        }
-      } else {
-        if (op === "×" || op === "÷") {
-          b = Math.floor(Math.random() * 15) + 2;
-          a = op === "÷" ? b * (Math.floor(Math.random() * 15) + 2) : Math.floor(Math.random() * 15) + 2;
-          answer = op === "×" ? a * b : a / b;
-        } else {
-          a = Math.floor(Math.random() * 200) + 10;
-          b = Math.floor(Math.random() * 200) + 10;
-          if (op === "-" && b > a) [a, b] = [b, a];
-          answer = op === "+" ? a + b : a - b;
-        }
-      }
+function genProblem(){
+  let a,b,op,answer;
+  const addOps=diff==='easy'?['+','-']:diff==='medium'?['+','-','×','÷']:['+','-','×','÷'];
+  op=addOps[Math.floor(Math.random()*addOps.length)];
+  if(diff==='easy'){a=Math.floor(Math.random()*20)+1;b=Math.floor(Math.random()*20)+1;if(op==='-'&&b>a)[a,b]=[b,a];answer=op==='+'?a+b:a-b;}
+  else if(diff==='medium'){
+    if(op==='×'||op==='÷'){b=Math.floor(Math.random()*12)+2;a=op==='÷'?b*(Math.floor(Math.random()*12)+2):Math.floor(Math.random()*12)+2;answer=op==='×'?a*b:a/b;}
+    else{a=Math.floor(Math.random()*50)+10;b=Math.floor(Math.random()*50)+1;if(op==='-'&&b>a)[a,b]=[b,a];answer=op==='+'?a+b:a-b;}
+  }else{
+    if(op==='×'||op==='÷'){b=Math.floor(Math.random()*15)+2;a=op==='÷'?b*(Math.floor(Math.random()*15)+2):Math.floor(Math.random()*15)+2;answer=op==='×'?a*b:a/b;}
+    else{a=Math.floor(Math.random()*300)+20;b=Math.floor(Math.random()*300)+10;if(op==='-'&&b>a)[a,b]=[b,a];answer=op==='+'?a+b:a-b;}
+  }
+  const labels={'+':'Addition','-':'Subtraction','×':'Multiplication','÷':'Division'};
+  return{display:`${a} ${op} ${b}`,answer,label:labels[op]};
+}
 
-      const labels = { "+": "Addition", "-": "Subtraction", "×": "Multiplication", "÷": "Division" };
-      return { display: `${a} ${op} ${b} = ?`, answer, label: labels[op] };
+function startGame(){
+  clearInterval(timerInterval);
+  score=0;correctCount=0;streak=0;bestStreak=0;timeLeft=DURATION;
+  document.getElementById('score').textContent=0;
+  document.getElementById('correct-count').textContent=0;
+  document.getElementById('timer').textContent=DURATION;
+  document.getElementById('timer').style.color='var(--accent2)';
+  document.getElementById('timer-fill').style.width='100%';
+  document.getElementById('timer-fill').classList.remove('urgent');
+  document.getElementById('screen-start').style.display='none';
+  document.getElementById('screen-over').style.display='none';
+  document.getElementById('screen-game').style.display='block';
+  nextProblem();
+  document.getElementById('answer').focus();
+
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    const pct=(timeLeft/DURATION)*100;
+    document.getElementById('timer').textContent=timeLeft;
+    document.getElementById('timer-fill').style.width=pct+'%';
+    if(timeLeft<=10){
+      document.getElementById('timer-fill').classList.add('urgent');
+      document.getElementById('timer').style.color='#f43f5e';
+      sfxTick();
     }
+    if(timeLeft<=0){clearInterval(timerInterval);endGame();}
+  },1000);
+}
 
-    function loadProblem() {
-      const p = genProblem();
-      currentAnswer = p.answer;
-      document.getElementById("problem").textContent = p.display;
-      document.getElementById("op-label").textContent = p.label;
-      document.getElementById("answer").value = "";
-      document.getElementById("answer").className = "";
-      document.getElementById("feedback").textContent = "";
-      document.getElementById("feedback").className = "feedback";
-      document.getElementById("answer").focus();
-    }
+function nextProblem(){
+  const p=genProblem();
+  currentAnswer=p.answer;
+  document.getElementById('problem').textContent=p.display+' = ?';
+  document.getElementById('op-badge').textContent=p.label;
+  document.getElementById('answer').value='';
+  document.getElementById('answer').className='';
+  document.getElementById('answer').focus();
+  updateCombo();
+}
 
-    function startGame() {
-      score = 0; correct = 0; streak = 0; timeLeft = DURATION;
-      document.getElementById("score-val").textContent = 0;
-      document.getElementById("correct-val").textContent = 0;
-      document.getElementById("streak-val").textContent = 0;
-      document.getElementById("timer-val").textContent = DURATION;
-      document.getElementById("timer-val").classList.remove("urgent");
-      document.getElementById("timer-fill").style.width = "100%";
-      document.getElementById("timer-fill").style.background = "var(--accent)";
-      document.getElementById("start-screen").style.display = "none";
-      document.getElementById("game-over").style.display = "none";
-      document.getElementById("game-screen").style.display = "block";
+function updateCombo(){
+  const c=document.getElementById('combo');
+  if(streak>=3){c.textContent=`🔥 x${streak}`;c.className='combo-display show';}
+  else{c.className='combo-display';}
+}
 
-      loadProblem();
+function floatScore(val,good){
+  const el=document.createElement('div');
+  el.className='score-popup '+(good?'good':'bad');
+  el.textContent=(good?'+':'')+val;
+  el.style.left=Math.random()*60+20+'%';
+  el.style.top='40%';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),800);
+}
 
-      timer = setInterval(() => {
-        timeLeft--;
-        const pct = (timeLeft / DURATION) * 100;
-        document.getElementById("timer-val").textContent = timeLeft;
-        document.getElementById("timer-fill").style.width = pct + "%";
-        if (timeLeft <= 10) {
-          document.getElementById("timer-val").classList.add("urgent");
-          document.getElementById("timer-fill").style.background = "var(--red)";
-        }
-        if (timeLeft <= 0) endGame();
-      }, 1000);
-    }
+function submitAnswer(){
+  const inp=document.getElementById('answer');
+  const val=parseFloat(inp.value);
+  if(isNaN(val))return;
+  const card=document.getElementById('problem-card');
 
-    function endGame() {
-      clearInterval(timer);
-      document.getElementById("game-screen").style.display = "none";
-      document.getElementById("game-over").style.display = "block";
-      document.getElementById("res-score").textContent = score;
-      document.getElementById("res-correct").textContent = correct;
-      const key = `speedmath-best-${difficulty}`;
-      const prev = parseInt(localStorage.getItem(key) || "0");
-      const best = Math.max(prev, score);
-      localStorage.setItem(key, best);
-      document.getElementById("res-best").textContent = best;
-      document.getElementById("go-title").textContent = score > prev ? "New Best!" : "Time's Up!";
-    }
+  if(val===currentAnswer){
+    streak++;if(streak>bestStreak)bestStreak=streak;
+    const bonus=streak>=5?5:streak>=3?2:0;
+    const pts=10+bonus;
+    score+=pts;correctCount++;
+    sfxCorrect(streak);
+    inp.classList.add('flash-green');
+    card.classList.add('correct-flash');
+    setTimeout(()=>{card.classList.remove('correct-flash');inp.classList.remove('flash-green');},300);
+    floatScore(pts,true);
+    document.getElementById('score').textContent=score;
+    document.getElementById('correct-count').textContent=correctCount;
+  }else{
+    streak=0;
+    sfxWrong();
+    inp.classList.add('flash-red');
+    card.classList.add('wrong-flash');
+    setTimeout(()=>{card.classList.remove('wrong-flash');inp.classList.remove('flash-red');},400);
+    floatScore(`✗`,false);
+  }
+  nextProblem();
+}
 
-    document.getElementById("answer").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const val = parseInt(document.getElementById("answer").value);
-        if (isNaN(val)) return;
-        const inp = document.getElementById("answer");
-        const fb = document.getElementById("feedback");
-        if (val === currentAnswer) {
-          streak++;
-          const bonus = Math.floor(streak / 3);
-          score += 10 + bonus;
-          correct++;
-          inp.className = "correct";
-          fb.textContent = streak >= 3 ? `Correct! 🔥 ${streak} streak` : "Correct!";
-          fb.className = "feedback correct";
-        } else {
-          streak = 0;
-          fb.textContent = `Wrong. Answer was ${currentAnswer}`;
-          fb.className = "feedback wrong";
-          inp.className = "wrong";
-        }
-        document.getElementById("score-val").textContent = score;
-        document.getElementById("correct-val").textContent = correct;
-        document.getElementById("streak-val").textContent = streak;
-        setTimeout(loadProblem, 400);
-      }
-    });
+function endGame(){
+  document.getElementById('screen-game').style.display='none';
+  document.getElementById('screen-over').style.display='block';
+  const key=`speedmath-best-${diff}`;
+  const prev=parseInt(localStorage.getItem(key)||'0');
+  if(score>prev)localStorage.setItem(key,score);
+  const best=Math.max(prev,score);
+  document.getElementById('res-score').textContent=score;
+  document.getElementById('res-correct').textContent=correctCount;
+  document.getElementById('res-speed').textContent=correctCount; // per 60s = per min
+  document.getElementById('res-best').textContent=best;
 
-    document.getElementById("btn-start").addEventListener("click", startGame);
-    document.getElementById("btn-play-again").addEventListener("click", startGame);
-    document.getElementById("btn-menu").addEventListener("click", () => {
-      document.getElementById("game-over").style.display = "none";
-      document.getElementById("start-screen").style.display = "block";
-    });
-  </script>
+  const pct=correctCount/40;
+  let emoji,title,sub;
+  if(score>prev){emoji='🏆';title='New Personal Best!';sub=`${correctCount} correct in 60 seconds. That's ${diff} mode dominance.`;sfxWin();launchConfetti();}
+  else if(correctCount>=20){emoji='⚡';title='You were cooking!';sub=`${correctCount} correct answers. Quick brain.`;}
+  else if(correctCount>=10){emoji='💪';title='Decent run!';sub=`${correctCount} correct. Pick a harder difficulty next time.`;}
+  else{emoji='🧮';title='Math is hard.';sub='It happens. Come back when the brain is warmed up.';}
+  document.getElementById('over-emoji').textContent=emoji;
+  document.getElementById('over-title').textContent=title;
+  document.getElementById('over-sub').textContent=sub;
+}
+
+document.getElementById('answer').addEventListener('keydown',e=>{if(e.key==='Enter')submitAnswer();});
+document.getElementById('btn-start').addEventListener('click',startGame);
+document.getElementById('btn-restart').addEventListener('click',startGame);
+document.getElementById('btn-menu').addEventListener('click',()=>{
+  clearInterval(timerInterval);
+  document.getElementById('screen-over').style.display='none';
+  document.getElementById('screen-start').style.display='block';
+});
+</script>
 </body>
 </html>

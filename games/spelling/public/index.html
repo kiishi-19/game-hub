@@ -5,229 +5,513 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spelling Challenge</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f0f13; --surface: #1a1a24; --border: #2a2a3a;
-      --accent: #f6821f; --text: #e8e8f0; --text-muted: #888899;
-      --green: #22c55e; --red: #ef4444;
+      --bg: #0d0618;
+      --surface: #1a0d2e;
+      --border: rgba(139,92,246,0.2);
+      --accent: #8b5cf6;
+      --accent2: #a78bfa;
+      --text: #f1f0ff;
+      --muted: rgba(255,255,255,0.45);
+      --green: #22c55e;
+      --red: #f43f5e;
+      --yellow: #fbbf24;
     }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
-    .back { position: fixed; top: 1rem; left: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
-    .back:hover { color: var(--accent); }
-    .game { width: 100%; max-width: 520px; text-align: center; }
-    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
-    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
-    .score-bar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 2rem; font-size: 0.9rem; }
-    .score-bar span { color: var(--text-muted); }
-    .score-bar strong { color: var(--accent); font-size: 1.1rem; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; }
-    .word-display { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.5rem; min-height: 1.5rem; }
-    .definition { font-size: 1rem; line-height: 1.6; color: var(--text); margin-bottom: 1.5rem; min-height: 3rem; }
-    .hint-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-    .letters { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
-    .letter-box { width: 2.2rem; height: 2.5rem; border: 2px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; background: var(--bg); }
-    .letter-box.filled { border-color: var(--accent); color: var(--accent); }
-    .letter-box.correct { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
-    .letter-box.wrong { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.1); }
-    input { width: 100%; padding: 0.85rem 1rem; border-radius: 8px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-size: 1.1rem; text-align: center; text-transform: uppercase; letter-spacing: 0.1em; outline: none; transition: border-color 0.15s; }
-    input:focus { border-color: var(--accent); }
-    .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
-    button { flex: 1; padding: 0.85rem; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
-    button:hover { opacity: 0.85; }
-    #btn-check { background: var(--accent); color: #fff; }
-    #btn-skip { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
-    #btn-speak { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
-    .feedback { min-height: 2rem; font-size: 1rem; font-weight: 600; margin-top: 0.75rem; }
-    .feedback.correct { color: var(--green); }
-    .feedback.wrong { color: var(--red); }
-    #game-over { display: none; }
-    #game-over h2 { font-size: 2rem; margin-bottom: 0.5rem; }
-    #game-over p { color: var(--text-muted); margin-bottom: 1.5rem; }
-    #btn-restart { background: var(--accent); color: #fff; padding: 0.85rem 2rem; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background-image: radial-gradient(ellipse at top, rgba(139,92,246,0.12) 0%, transparent 60%);
+    }
+
+    .back {
+      position: fixed; top: 1rem; left: 1rem;
+      color: var(--muted); text-decoration: none; font-size: 0.8rem;
+      display: flex; align-items: center; gap: 0.3rem;
+      transition: color 0.15s;
+    }
+    .back:hover { color: var(--accent2); }
+
+    .game { width: 100%; max-width: 540px; }
+
+    /* header */
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; }
+    .header h1 span { background: linear-gradient(135deg, #a78bfa, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .header p { color: var(--muted); font-size: 0.875rem; margin-top: 0.3rem; }
+
+    /* hud */
+    .hud {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 0.85rem 1.25rem; margin-bottom: 1.5rem;
+    }
+    .hud-item { text-align: center; }
+    .hud-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.2rem; }
+    .hud-val { font-size: 1.3rem; font-weight: 800; }
+    .hud-val.score { color: var(--accent2); }
+    .lives-row { display: flex; gap: 0.3rem; font-size: 1.1rem; }
+
+    /* progress bar */
+    .progress-wrap { height: 4px; background: rgba(255,255,255,0.08); border-radius: 99px; margin-bottom: 1.5rem; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #c084fc); border-radius: 99px; transition: width 0.4s ease; }
+
+    /* main card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.6;
+    }
+    .card.shake { animation: shake 0.45s cubic-bezier(0.36,0.07,0.19,0.97); border-color: var(--red); }
+    .card.correct-flash { animation: correctFlash 0.4s ease; border-color: var(--green); }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}
+      15%{transform:translateX(-8px)}
+      30%{transform:translateX(8px)}
+      45%{transform:translateX(-6px)}
+      60%{transform:translateX(6px)}
+      75%{transform:translateX(-3px)}
+      90%{transform:translateX(3px)}
+    }
+    @keyframes correctFlash {
+      0%{background: var(--surface)}
+      40%{background: rgba(34,197,94,0.15)}
+      100%{background: var(--surface)}
+    }
+
+    /* listen button */
+    .listen-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      width: 100%; padding: 1.1rem;
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.08));
+      border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 12px; color: var(--accent2);
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: all 0.15s; margin-bottom: 1.5rem;
+    }
+    .listen-btn:hover { background: rgba(139,92,246,0.25); transform: scale(1.02); }
+    .listen-btn.playing { animation: pulse-btn 0.6s ease infinite alternate; }
+    @keyframes pulse-btn { from{box-shadow:0 0 0 rgba(139,92,246,0)} to{box-shadow:0 0 20px rgba(139,92,246,0.5)} }
+
+    /* definition */
+    .definition {
+      font-size: 1rem; line-height: 1.65; color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.04); border-radius: 10px;
+      padding: 0.85rem 1rem; margin-bottom: 1.5rem;
+      border-left: 3px solid var(--accent);
+      min-height: 4rem;
+    }
+
+    /* letter boxes */
+    .letter-row-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.5rem; }
+    .letter-boxes { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1.5rem; }
+    .lbox {
+      width: 2.4rem; height: 2.8rem;
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800; text-transform: uppercase;
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      transition: all 0.15s;
+    }
+    .lbox.active-pos { border-color: var(--accent); background: rgba(139,92,246,0.12); }
+    .lbox.filled { border-color: rgba(139,92,246,0.5); color: var(--accent2); }
+    .lbox.correct { border-color: var(--green); background: rgba(34,197,94,0.12); color: var(--green); animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    .lbox.wrong { border-color: var(--red); background: rgba(244,63,94,0.12); color: var(--red); }
+    @keyframes popIn { 0%{transform:scale(0.85)} 100%{transform:scale(1)} }
+
+    /* input */
+    .input-wrap { position: relative; margin-bottom: 1rem; }
+    input#answer {
+      width: 100%; padding: 1rem 1.2rem;
+      background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 12px; color: var(--text);
+      font-size: 1.15rem; font-weight: 700;
+      text-align: center; text-transform: uppercase; letter-spacing: 0.12em;
+      outline: none; transition: border-color 0.15s, background 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    input#answer:focus { border-color: var(--accent); background: rgba(139,92,246,0.08); }
+    input#answer:disabled { opacity: 0.6; }
+
+    .btn-row { display: flex; gap: 0.75rem; }
+    .btn {
+      flex: 1; padding: 0.9rem; border-radius: 10px;
+      border: none; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: #fff; }
+    .btn-primary:hover { box-shadow: 0 4px 20px rgba(139,92,246,0.5); }
+    .btn-secondary { background: rgba(255,255,255,0.07); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+
+    /* feedback toast */
+    .feedback-toast {
+      text-align: center; min-height: 2rem;
+      font-size: 0.95rem; font-weight: 700;
+      margin-top: 0.75rem; transition: opacity 0.2s;
+    }
+    .feedback-toast.good { color: var(--green); }
+    .feedback-toast.bad { color: var(--red); }
+
+    /* streak badge */
+    .streak-badge {
+      display: inline-block;
+      padding: 0.25rem 0.7rem;
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      border-radius: 99px;
+      font-size: 0.8rem; font-weight: 800;
+      color: #fff;
+      animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    /* game over */
+    #screen-over {
+      display: none; text-align: center;
+    }
+    .over-emoji { font-size: 4rem; margin-bottom: 0.75rem; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    .over-title { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+    .over-sub { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; line-height: 1.6; }
+    .result-chips { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; }
+    .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.5rem; text-align: center; }
+    .chip-val { font-size: 2rem; font-weight: 900; color: var(--accent2); }
+    .chip-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 0.2rem; }
+
+    /* confetti canvas */
+    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
   </style>
 </head>
 <body>
-  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Game Hub</a>
+  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Hub</a>
+  <canvas id="confetti-canvas"></canvas>
 
   <div class="game">
-    <h1>✏️ Spelling Challenge</h1>
-    <p class="subtitle">Spell the word correctly based on the definition</p>
-
-    <div class="score-bar">
-      <span>Score: <strong id="score">0</strong></span>
-      <span>Question <strong id="qnum">1</strong> / <strong id="qtotal">10</strong></span>
-      <span>Streak: <strong id="streak">0</strong></span>
+    <div class="header">
+      <h1>✏️ <span>Spelling</span> Challenge</h1>
+      <p>Hear it. Spell it. Don't embarrass yourself.</p>
     </div>
 
-    <div id="game-area">
-      <div class="card">
-        <div class="word-display" id="word-display"></div>
-        <div class="definition" id="definition">Loading...</div>
-        <div class="hint-label">Spell the word:</div>
-        <div class="letters" id="letters"></div>
-        <input type="text" id="answer-input" placeholder="Type your answer..." autocomplete="off" autocorrect="off" spellcheck="false" />
-        <div class="btn-row">
-          <button id="btn-speak">🔊 Hear it</button>
-          <button id="btn-skip">Skip</button>
-          <button id="btn-check">Check</button>
+    <div id="screen-game">
+      <div class="hud">
+        <div class="hud-item">
+          <div class="hud-label">Score</div>
+          <div class="hud-val score" id="score">0</div>
         </div>
-        <div class="feedback" id="feedback"></div>
+        <div class="hud-item">
+          <div class="hud-label">Lives</div>
+          <div class="lives-row" id="lives">❤️❤️❤️</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Word</div>
+          <div class="hud-val" id="qnum" style="color:var(--muted)">1<span style="font-size:0.8rem;opacity:0.5">/10</span></div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-fill" id="prog" style="width:0%"></div>
+      </div>
+
+      <div class="card" id="main-card">
+        <button class="listen-btn" id="btn-listen">
+          <span id="listen-icon">🔊</span> Tap to hear the word
+        </button>
+        <div class="definition" id="definition">Loading...</div>
+        <div class="letter-row-label">Spell it out:</div>
+        <div class="letter-boxes" id="letter-boxes"></div>
+        <div class="input-wrap">
+          <input type="text" id="answer" placeholder="Type your answer..."
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-skip">Skip</button>
+          <button class="btn btn-primary" id="btn-check">Check →</button>
+        </div>
+        <div class="feedback-toast" id="feedback"></div>
       </div>
     </div>
 
-    <div id="game-over">
-      <h2>Game Over!</h2>
-      <p id="final-score"></p>
-      <button id="btn-restart">Play Again</button>
+    <div id="screen-over">
+      <div class="over-emoji" id="over-emoji">🎉</div>
+      <div class="over-title" id="over-title">Not bad!</div>
+      <div class="over-sub" id="over-sub"></div>
+      <div class="result-chips">
+        <div class="chip"><div class="chip-val" id="res-score">0</div><div class="chip-label">Score</div></div>
+        <div class="chip"><div class="chip-val" id="res-correct">0</div><div class="chip-label">Correct</div></div>
+        <div class="chip"><div class="chip-val" id="res-streak">0</div><div class="chip-label">Best streak</div></div>
+      </div>
+      <div class="btn-row" style="max-width:320px;margin:0 auto;gap:0.75rem;">
+        <button class="btn btn-secondary" onclick="location.href='https://game-hub.kiishiogunbiyi.workers.dev'">← Hub</button>
+        <button class="btn btn-primary" id="btn-restart">Play Again</button>
+      </div>
     </div>
   </div>
 
-  <script>
-    const WORDS = [
-      { word: "accommodate", def: "To provide lodging or space for someone; to make room for." },
-      { word: "conscientious", def: "Wishing to do what is right, especially in work; diligent and careful." },
-      { word: "mischievous", def: "Causing or showing a fondness for causing trouble in a playful way." },
-      { word: "perseverance", def: "Continued effort to do something despite difficulty or delay in achieving success." },
-      { word: "entrepreneur", def: "A person who organizes and operates a business, taking on financial risk." },
-      { word: "acknowledge", def: "To accept or admit the existence or truth of something." },
-      { word: "surveillance", def: "Close observation, especially of a suspected spy or criminal." },
-      { word: "exaggerate", def: "To represent something as being larger, better, or worse than it really is." },
-      { word: "guarantee", def: "A formal promise or assurance that certain conditions will be fulfilled." },
-      { word: "Mediterranean", def: "Relating to the sea bordered by Europe, North Africa, and western Asia." },
-      { word: "necessary", def: "Required to be done; absolutely needed to achieve a certain result." },
-      { word: "occasionally", def: "At infrequent or irregular intervals; not often but sometimes." },
-      { word: "privilege", def: "A special right, advantage, or immunity granted to a particular person or group." },
-      { word: "definitely", def: "Without any doubt; used to emphasize that something is certain." },
-      { word: "occurrence", def: "An incident or event; the fact of something happening." },
-      { word: "rhythm", def: "A strong, regular, repeated pattern of movement or sound." },
-      { word: "superstitious", def: "Excessively credulous belief in and reverence for supernatural influences." },
-      { word: "weird", def: "Suggesting something supernatural; uncanny or strange." },
-      { word: "liaison", def: "Communication or cooperation between people or groups; a person who does this." },
-      { word: "bureaucracy", def: "A system of government or management with complex rules and processes." },
-    ];
+<script>
+// ── AUDIO ──────────────────────────────────────────────────────────────────
+const AC = new (window.AudioContext || window.webkitAudioContext)();
 
-    let questions = [], current = 0, score = 0, streak = 0;
+function playTone(freq, type, dur, vol=0.3, delay=0) {
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.connect(g); g.connect(AC.destination);
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, AC.currentTime + delay);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + delay + dur);
+  o.start(AC.currentTime + delay);
+  o.stop(AC.currentTime + delay + dur + 0.05);
+}
 
-    function shuffle(arr) {
-      return [...arr].sort(() => Math.random() - 0.5);
-    }
+function sfxCorrect() {
+  playTone(523, 'sine', 0.1, 0.3);
+  playTone(659, 'sine', 0.1, 0.3, 0.1);
+  playTone(784, 'sine', 0.18, 0.3, 0.2);
+}
 
-    function startGame() {
-      questions = shuffle(WORDS).slice(0, 10);
-      current = 0; score = 0; streak = 0;
-      document.getElementById("qtotal").textContent = questions.length;
-      document.getElementById("game-over").style.display = "none";
-      document.getElementById("game-area").style.display = "block";
-      loadQuestion();
-    }
+function sfxWrong() {
+  playTone(200, 'sawtooth', 0.15, 0.25);
+  playTone(150, 'sawtooth', 0.2, 0.2, 0.15);
+}
 
-    function loadQuestion() {
-      const q = questions[current];
-      document.getElementById("qnum").textContent = current + 1;
-      document.getElementById("score").textContent = score;
-      document.getElementById("streak").textContent = streak;
-      document.getElementById("definition").textContent = q.def;
-      document.getElementById("word-display").textContent = "";
-      document.getElementById("feedback").textContent = "";
-      document.getElementById("feedback").className = "feedback";
-      document.getElementById("answer-input").value = "";
-      document.getElementById("answer-input").disabled = false;
-      document.getElementById("btn-check").disabled = false;
-      renderBoxes(q.word.length);
-      document.getElementById("answer-input").focus();
-      speakWord(q.word);
-    }
+function sfxWin() {
+  [523,659,784,1047].forEach((f, i) => playTone(f, 'sine', 0.15, 0.25, i * 0.1));
+}
 
-    function renderBoxes(len) {
-      const c = document.getElementById("letters");
-      c.innerHTML = "";
-      for (let i = 0; i < len; i++) {
-        const box = document.createElement("div");
-        box.className = "letter-box";
-        box.id = `box-${i}`;
-        c.appendChild(box);
-      }
-    }
+// ── CONFETTI ───────────────────────────────────────────────────────────────
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
 
-    function updateBoxes(val, word) {
-      for (let i = 0; i < word.length; i++) {
-        const box = document.getElementById(`box-${i}`);
-        if (!box) continue;
-        const ch = val[i] || "";
-        box.textContent = ch.toUpperCase();
-        box.className = "letter-box" + (ch ? " filled" : "");
-      }
-    }
-
-    function speakWord(word) {
-      if (!window.speechSynthesis) return;
-      const utt = new SpeechSynthesisUtterance(word);
-      utt.rate = 0.85;
-      speechSynthesis.speak(utt);
-    }
-
-    function check() {
-      const q = questions[current];
-      const val = document.getElementById("answer-input").value.trim().toLowerCase();
-      const correct = q.word.toLowerCase();
-      const fb = document.getElementById("feedback");
-      const boxes = document.querySelectorAll(".letter-box");
-
-      for (let i = 0; i < correct.length; i++) {
-        const box = document.getElementById(`box-${i}`);
-        if (!box) continue;
-        const ch = val[i] || "";
-        box.textContent = ch.toUpperCase() || correct[i].toUpperCase();
-        box.className = "letter-box " + (ch.toLowerCase() === correct[i] ? "correct" : "wrong");
-      }
-
-      document.getElementById("answer-input").disabled = true;
-      document.getElementById("btn-check").disabled = true;
-
-      if (val === correct) {
-        score += 10 + streak;
-        streak++;
-        fb.textContent = `Correct! ${streak > 1 ? `+${streak - 1} streak bonus` : ""}`;
-        fb.className = "feedback correct";
-      } else {
-        streak = 0;
-        fb.textContent = `Wrong. It's "${q.word}"`;
-        fb.className = "feedback wrong";
-      }
-      document.getElementById("score").textContent = score;
-      document.getElementById("streak").textContent = streak;
-
-      setTimeout(next, 1800);
-    }
-
-    function next() {
-      current++;
-      if (current >= questions.length) {
-        document.getElementById("game-area").style.display = "none";
-        document.getElementById("game-over").style.display = "block";
-        document.getElementById("final-score").textContent = `You scored ${score} points out of ${questions.length * 10} possible.`;
-      } else {
-        loadQuestion();
-      }
-    }
-
-    document.getElementById("answer-input").addEventListener("input", (e) => {
-      const q = questions[current];
-      updateBoxes(e.target.value, q.word);
+function launchConfetti() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  for (let i = 0; i < 120; i++) {
+    particles.push({
+      x: Math.random() * canvas.width, y: -10,
+      vx: (Math.random() - 0.5) * 6, vy: Math.random() * 4 + 2,
+      w: Math.random() * 10 + 4, h: Math.random() * 5 + 3,
+      rot: Math.random() * 360, vr: (Math.random() - 0.5) * 8,
+      color: ['#8b5cf6','#a78bfa','#22c55e','#fbbf24','#f43f5e','#38bdf8'][Math.floor(Math.random()*6)],
+      alpha: 1,
     });
-    document.getElementById("answer-input").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") check();
-    });
-    document.getElementById("btn-check").addEventListener("click", check);
-    document.getElementById("btn-skip").addEventListener("click", () => {
-      streak = 0; next();
-    });
-    document.getElementById("btn-speak").addEventListener("click", () => {
-      speakWord(questions[current].word);
-    });
-    document.getElementById("btn-restart").addEventListener("click", startGame);
+  }
+  requestAnimationFrame(animateConfetti);
+}
 
-    startGame();
-  </script>
+function animateConfetti() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.alpha > 0.05);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+    if (p.y > canvas.height * 0.7) p.alpha -= 0.02;
+    ctx.save();
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
+  });
+  if (particles.length) requestAnimationFrame(animateConfetti);
+}
+
+// ── WORDS ──────────────────────────────────────────────────────────────────
+const WORDS = [
+  { word: "accommodate", def: "To provide space or housing for someone; to make room." },
+  { word: "conscientious", def: "Taking care to do things correctly and thoroughly; meticulous." },
+  { word: "mischievous", def: "Causing trouble in a playful, not malicious, way." },
+  { word: "perseverance", def: "Continued effort despite difficulty or setbacks." },
+  { word: "entrepreneur", def: "Someone who starts and runs a business, taking on financial risk." },
+  { word: "acknowledge", def: "To accept or admit that something exists or is true." },
+  { word: "surveillance", def: "Close monitoring of a person or group, often by authorities." },
+  { word: "exaggerate", def: "To make something seem larger, better, or worse than it really is." },
+  { word: "guarantee", def: "A formal promise that something will happen or be done." },
+  { word: "Mediterranean", def: "Relating to the sea and region between Europe and North Africa." },
+  { word: "necessary", def: "Required to be done; essential to achieve a result." },
+  { word: "occasionally", def: "Sometimes but not often; at irregular intervals." },
+  { word: "privilege", def: "A special right or advantage granted to a select person or group." },
+  { word: "definitely", def: "Without doubt; used to emphasize certainty." },
+  { word: "occurrence", def: "An event or incident; the fact of something happening." },
+  { word: "rhythm", def: "A strong, regular, repeated pattern of sound or movement." },
+  { word: "liaison", def: "Communication between groups; a person who acts as a link." },
+  { word: "bureaucracy", def: "A system with complex rules, processes, and red tape." },
+  { word: "pronunciation", def: "The way in which a word is spoken or said aloud." },
+  { word: "fahrenheit", def: "A temperature scale where water freezes at 32° and boils at 212°." },
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let questions=[], cur=0, score=0, lives=3, streak=0, bestStreak=0;
+const TOTAL = 10;
+
+function shuffle(a) { return [...a].sort(() => Math.random()-0.5); }
+
+function startGame() {
+  questions = shuffle(WORDS).slice(0, TOTAL);
+  cur=0; score=0; lives=3; streak=0; bestStreak=0;
+  document.getElementById('screen-over').style.display = 'none';
+  document.getElementById('screen-game').style.display = 'block';
+  loadQ();
+}
+
+function renderLives() {
+  document.getElementById('lives').innerHTML = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+}
+
+function loadQ() {
+  const q = questions[cur];
+  document.getElementById('qnum').innerHTML = `${cur+1}<span style="font-size:0.8rem;opacity:0.5">/${TOTAL}</span>`;
+  document.getElementById('score').textContent = score;
+  document.getElementById('prog').style.width = `${(cur/TOTAL)*100}%`;
+  document.getElementById('definition').textContent = q.def;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback-toast';
+  document.getElementById('answer').value = '';
+  document.getElementById('answer').disabled = false;
+  document.getElementById('btn-check').disabled = false;
+  renderLives();
+  buildBoxes(q.word.length);
+  document.getElementById('answer').focus();
+  setTimeout(() => speak(q.word), 300);
+}
+
+function buildBoxes(n) {
+  const c = document.getElementById('letter-boxes');
+  c.innerHTML = '';
+  for (let i=0; i<n; i++) {
+    const d = document.createElement('div');
+    d.className = 'lbox';
+    d.id = `lb${i}`;
+    c.appendChild(d);
+  }
+}
+
+function updateBoxes(val, word) {
+  for (let i=0; i<word.length; i++) {
+    const b = document.getElementById(`lb${i}`);
+    if (!b) continue;
+    const ch = val[i] || '';
+    b.textContent = ch.toUpperCase();
+    b.className = 'lbox' + (ch ? ' filled' : '');
+    if (i === val.length) b.classList.add('active-pos');
+  }
+}
+
+function speak(word) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = 0.82; u.pitch = 1;
+  const btn = document.getElementById('btn-listen');
+  btn.classList.add('playing');
+  u.onend = () => btn.classList.remove('playing');
+  speechSynthesis.speak(u);
+}
+
+function check() {
+  const q = questions[cur];
+  const val = document.getElementById('answer').value.trim().toLowerCase();
+  const correct = q.word.toLowerCase();
+  const fb = document.getElementById('feedback');
+  const card = document.getElementById('main-card');
+
+  // reveal boxes
+  for (let i=0; i<correct.length; i++) {
+    const b = document.getElementById(`lb${i}`);
+    if (!b) continue;
+    b.textContent = (val[i]||'').toUpperCase() || correct[i].toUpperCase();
+    b.className = 'lbox ' + ((val[i]||'').toLowerCase()===correct[i] ? 'correct' : 'wrong');
+  }
+
+  document.getElementById('answer').disabled = true;
+  document.getElementById('btn-check').disabled = true;
+
+  const msgs_good = ["Nailed it! 🎯", "Clean! ✨", "Let's go! 🔥", "Easy money 💅", "Spelling bee energy!"];
+  const msgs_bad = [`It's "${q.word}" — write it 10 times 😂`, `Close... but not close enough.`, `"${q.word}" — now you know!`, `Yikes. It's "${q.word}" 💀`];
+
+  if (val === correct) {
+    streak++; if (streak > bestStreak) bestStreak = streak;
+    const bonus = Math.floor(streak / 3) * 5;
+    score += 10 + bonus;
+    sfxCorrect();
+    card.classList.add('correct-flash');
+    setTimeout(() => card.classList.remove('correct-flash'), 400);
+    fb.className = 'feedback-toast good';
+    fb.innerHTML = msgs_good[Math.floor(Math.random()*msgs_good.length)] +
+      (streak >= 3 ? ` <span class="streak-badge">🔥 ${streak} streak</span>` : '');
+  } else {
+    streak = 0; lives--;
+    sfxWrong();
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 450);
+    fb.className = 'feedback-toast bad';
+    fb.textContent = msgs_bad[Math.floor(Math.random()*msgs_bad.length)];
+    renderLives();
+  }
+
+  document.getElementById('score').textContent = score;
+
+  if (lives <= 0) { setTimeout(endGame, 1200); return; }
+  setTimeout(next, 1600);
+}
+
+function next() {
+  cur++;
+  if (cur >= questions.length) endGame();
+  else loadQ();
+}
+
+function endGame() {
+  document.getElementById('screen-game').style.display = 'none';
+  document.getElementById('screen-over').style.display = 'block';
+  document.getElementById('prog').style.width = '100%';
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-correct').textContent = cur - (lives <= 0 ? 0 : 0) + '/' + Math.min(cur, TOTAL);
+  document.getElementById('res-streak').textContent = bestStreak;
+
+  const pct = score / (TOTAL * 10);
+  let emoji, title, sub;
+  if (pct >= 0.9) { emoji='🏆'; title='Spelling bee champion!'; sub='Genuinely impressive. Your spelling game is elite.'; sfxWin(); launchConfetti(); }
+  else if (pct >= 0.6) { emoji='🎉'; title='Solid effort!'; sub='You know your words. A few more rounds and you\'ll be untouchable.'; }
+  else if (pct >= 0.3) { emoji='📚'; title='Keep studying!'; sub='The words are the words. You just need more reps. Come back.'; }
+  else { emoji='😬'; title='Rough one.'; sub='Look, the only way out is through. Play again. No judgment.'; }
+
+  document.getElementById('over-emoji').textContent = emoji;
+  document.getElementById('over-title').textContent = title;
+  document.getElementById('over-sub').textContent = sub;
+}
+
+// ── EVENTS ──────────────────────────────────────────────────────────────────
+document.getElementById('answer').addEventListener('input', e => {
+  updateBoxes(e.target.value, questions[cur].word);
+});
+document.getElementById('answer').addEventListener('keydown', e => {
+  if (e.key === 'Enter') check();
+});
+document.getElementById('btn-check').addEventListener('click', check);
+document.getElementById('btn-skip').addEventListener('click', () => { streak=0; next(); });
+document.getElementById('btn-listen').addEventListener('click', () => speak(questions[cur].word));
+document.getElementById('btn-restart').addEventListener('click', startGame);
+
+startGame();
+</script>
 </body>
 </html>
