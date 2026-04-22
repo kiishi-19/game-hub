@@ -1,0 +1,5 @@
+# Copy this to .dev.vars for local development
+# .dev.vars is gitignored — never commit actual values
+
+# Example (add any game-specific vars here as needed):
+# MY_API_KEY=your_key_here

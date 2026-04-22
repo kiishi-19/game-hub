@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Meaning</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f13; --surface: #1a1a24; --border: #2a2a3a;
+      --accent: #f6821f; --text: #e8e8f0; --text-muted: #888899;
+      --green: #22c55e; --red: #ef4444;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+    .back { position: fixed; top: 1rem; left: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
+    .back:hover { color: var(--accent); }
+    .game { width: 100%; max-width: 580px; text-align: center; }
+    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .score-bar { display: flex; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .score-bar span { color: var(--text-muted); }
+    .score-bar strong { color: var(--accent); }
+    .progress { height: 4px; background: var(--border); border-radius: 99px; margin-bottom: 1.5rem; }
+    .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s ease; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1rem; }
+    .word { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 0.4rem; color: var(--accent); }
+    .pos { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; font-style: italic; }
+    .instruction { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .choices { display: flex; flex-direction: column; gap: 0.65rem; }
+    .choice { background: var(--bg); border: 2px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; font-size: 0.95rem; line-height: 1.5; cursor: pointer; text-align: left; color: var(--text); transition: border-color 0.15s, background 0.15s; }
+    .choice:hover:not(:disabled) { border-color: var(--accent); background: rgba(246,130,31,0.06); }
+    .choice.correct { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+    .choice.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); color: var(--red); }
+    .choice:disabled { cursor: default; }
+    .choice-letter { display: inline-block; width: 1.4rem; height: 1.4rem; border-radius: 4px; background: var(--border); color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-align: center; line-height: 1.4rem; margin-right: 0.6rem; flex-shrink: 0; }
+    .feedback { min-height: 2.5rem; font-size: 0.9rem; line-height: 1.5; padding: 0.5rem 0; }
+    .feedback.correct { color: var(--green); }
+    .feedback.wrong { color: var(--red); }
+    .example { margin-top: 0.5rem; font-style: italic; color: var(--text-muted); font-size: 0.85rem; }
+    #game-over { display: none; }
+    #game-over h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; }
+    #game-over p { color: var(--text-muted); margin-bottom: 1.5rem; }
+    #btn-restart { background: var(--accent); color: #fff; padding: 0.85rem 2rem; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; background: rgba(246,130,31,0.15); color: var(--accent); margin-left: 0.4rem; }
+  </style>
+</head>
+<body>
+  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Game Hub</a>
+
+  <div class="game">
+    <h1>📖 Word Meaning</h1>
+    <p class="subtitle">Match the word to its correct definition</p>
+
+    <div class="score-bar">
+      <span>Score: <strong id="score">0</strong></span>
+      <span>Q <strong id="qnum">1</strong> / <strong id="qtotal">10</strong></span>
+      <span>Best: <strong id="best">0</strong></span>
+    </div>
+    <div class="progress"><div class="progress-bar" id="pb"></div></div>
+
+    <div id="game-area">
+      <div class="card">
+        <div class="word" id="word"></div>
+        <div class="pos" id="pos"></div>
+        <div class="instruction">Which definition matches this word?</div>
+        <div class="choices" id="choices"></div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </div>
+
+    <div id="game-over">
+      <h2 id="go-title">Done!</h2>
+      <p id="final-score"></p>
+      <button id="btn-restart">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const VOCAB = [
+      { word: "ephemeral", pos: "adjective", def: "Lasting for a very short time; transitory.", wrong: ["Extremely large and imposing", "Happening at regular intervals", "Deeply rooted and long-standing"], example: "The ephemeral beauty of cherry blossoms makes them all the more precious." },
+      { word: "ubiquitous", pos: "adjective", def: "Present, appearing, or found everywhere.", wrong: ["Extremely rare and hard to find", "Relating to a single specific place", "Moving rapidly from place to place"], example: "Smartphones have become ubiquitous in modern life." },
+      { word: "loquacious", pos: "adjective", def: "Tending to talk a great deal; talkative.", wrong: ["Extremely quiet and reserved", "Prone to lying and deception", "Having a pleasant, melodic voice"], example: "The loquacious host kept the dinner party lively with endless stories." },
+      { word: "sycophant", pos: "noun", def: "A person who acts obsequiously toward someone in order to gain advantage; a flatterer.", wrong: ["Someone who openly criticizes authority", "A person with extensive medical knowledge", "An independent advisor with no personal agenda"], example: "The CEO surrounded himself with sycophants who never challenged his ideas." },
+      { word: "taciturn", pos: "adjective", def: "Reserved or uncommunicative in speech; saying little.", wrong: ["Exceptionally gifted in music", "Prone to sudden outbursts of emotion", "Highly curious about the world"], example: "The taciturn professor rarely spoke outside of lectures." },
+      { word: "mendacious", pos: "adjective", def: "Not telling the truth; lying.", wrong: ["Extremely generous to others", "Prone to making poor decisions", "Highly skilled in negotiation"], example: "The mendacious politician claimed he had never met the witness." },
+      { word: "perspicacious", pos: "adjective", def: "Having a ready insight; shrewd and wise.", wrong: ["Extremely cautious and hesitant", "Prone to rash and impulsive decisions", "Interested only in superficial things"], example: "The perspicacious detective noticed the clue everyone else had missed." },
+      { word: "equanimity", pos: "noun", def: "Mental calmness and composure, especially in difficult situations.", wrong: ["A state of extreme excitement or joy", "Deep resentment and bitterness", "Intense focus on a single goal"], example: "She faced the diagnosis with remarkable equanimity." },
+      { word: "pernicious", pos: "adjective", def: "Having a harmful effect, especially in a gradual or subtle way.", wrong: ["Highly beneficial and nourishing", "Brightly colored and eye-catching", "Relating to ancient traditions"], example: "The pernicious effects of misinformation spread slowly through the community." },
+      { word: "obsequious", pos: "adjective", def: "Obedient or attentive to an excessive degree; servile.", wrong: ["Stubbornly resistant to authority", "Deeply spiritual and devout", "Skilled at completing tasks efficiently"], example: "The obsequious waiter agreed with every single thing his customers said." },
+      { word: "capricious", pos: "adjective", def: "Given to sudden and unaccountable changes of mood or behavior.", wrong: ["Extremely disciplined and consistent", "Deeply thoughtful before acting", "Loyal to a single set of values"], example: "The capricious weather made it impossible to plan outdoor events." },
+      { word: "garrulous", pos: "adjective", def: "Excessively talkative, especially on trivial matters.", wrong: ["Inclined to be silent and withdrawn", "Highly focused and concise in communication", "Thoughtful and deliberate in speech"], example: "The garrulous neighbor shared his opinions on everything from politics to gardening." },
+      { word: "tenacious", pos: "adjective", def: "Holding fast; not readily giving up; persistent.", wrong: ["Easily discouraged by obstacles", "Prone to abandoning projects midway", "Flexible and open to changing course"], example: "Her tenacious work ethic saw her through years of rejection." },
+      { word: "avarice", pos: "noun", def: "Extreme greed for wealth or material gain.", wrong: ["Generosity toward those in need", "A longing for adventure and travel", "Deep spiritual contentment"], example: "His avarice led him to cut corners in ways that ultimately destroyed his company." },
+      { word: "cogent", pos: "adjective", def: "Clear, logical, and convincing; compelling.", wrong: ["Confusing and hard to follow", "Emotionally charged and passionate", "Based entirely on personal experience"], example: "She made a cogent argument that swayed the committee's vote." },
+      { word: "insipid", pos: "adjective", def: "Lacking flavor, vigor, or interest; dull.", wrong: ["Overwhelmingly intense and bold", "Extremely sweet and pleasant", "Sharp and memorable in taste or style"], example: "The insipid film failed to hold anyone's attention." },
+      { word: "lament", pos: "verb/noun", def: "To express grief, regret, or sorrow; a passionate expression of grief.", wrong: ["To celebrate a recent success", "To make a formal legal complaint", "To perform a song at a ceremony"], example: "He lamented the loss of the old neighborhood." },
+      { word: "verbose", pos: "adjective", def: "Using or expressed in more words than are needed.", wrong: ["Extremely brief and to the point", "Incapable of expressing complex ideas", "Highly visual rather than text-based"], example: "The verbose report could have been summarized in two pages." },
+      { word: "malleable", pos: "adjective", def: "Able to be shaped or influenced; adaptable.", wrong: ["Rigid and resistant to change", "Capable of great physical strength", "Prone to breaking under pressure"], example: "Young minds are malleable and open to new ideas." },
+      { word: "acrimony", pos: "noun", def: "Bitterness or ill feeling, especially in speech or manner.", wrong: ["Deep admiration and respect", "A sense of shared victory", "Genuine curiosity about others"], example: "The divorce proceedings were marked by acrimony on both sides." },
+    ];
+
+    const ROUND = 10;
+    let questions = [], current = 0, score = 0;
+    const best = () => parseInt(localStorage.getItem("wm-best") || "0");
+
+    function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+
+    function startGame() {
+      questions = shuffle(VOCAB).slice(0, ROUND);
+      current = 0; score = 0;
+      document.getElementById("qtotal").textContent = ROUND;
+      document.getElementById("best").textContent = best();
+      document.getElementById("game-over").style.display = "none";
+      document.getElementById("game-area").style.display = "block";
+      loadQ();
+    }
+
+    function loadQ() {
+      const q = questions[current];
+      document.getElementById("qnum").textContent = current + 1;
+      document.getElementById("score").textContent = score;
+      document.getElementById("word").textContent = q.word;
+      document.getElementById("pos").textContent = q.pos;
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("feedback").className = "feedback";
+      document.getElementById("pb").style.width = `${(current / ROUND) * 100}%`;
+
+      const opts = shuffle([{ text: q.def, correct: true }, ...q.wrong.map(w => ({ text: w, correct: false }))]);
+      const letters = ["A", "B", "C", "D"];
+      const container = document.getElementById("choices");
+      container.innerHTML = "";
+      opts.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.innerHTML = `<span class="choice-letter">${letters[i]}</span>${opt.text}`;
+        btn.addEventListener("click", () => pick(btn, opt.correct, q));
+        container.appendChild(btn);
+      });
+    }
+
+    function pick(btn, correct, q) {
+      document.querySelectorAll(".choice").forEach(b => b.disabled = true);
+      const fb = document.getElementById("feedback");
+      if (correct) {
+        btn.classList.add("correct");
+        score += 10;
+        fb.innerHTML = `Correct! <span class="example">"${q.example}"</span>`;
+        fb.className = "feedback correct";
+      } else {
+        btn.classList.add("wrong");
+        document.querySelectorAll(".choice").forEach(b => {
+          if (b.textContent.includes(q.def)) b.classList.add("correct");
+        });
+        fb.textContent = `Wrong. The correct answer is highlighted above.`;
+        fb.className = "feedback wrong";
+      }
+      document.getElementById("score").textContent = score;
+      setTimeout(next, 2000);
+    }
+
+    function next() {
+      current++;
+      if (current >= questions.length) {
+        document.getElementById("game-area").style.display = "none";
+        document.getElementById("game-over").style.display = "block";
+        const prev = best();
+        if (score > prev) localStorage.setItem("wm-best", score);
+        document.getElementById("go-title").textContent = score > prev ? "New Best!" : "Round Complete!";
+        document.getElementById("final-score").textContent = `You scored ${score} / ${ROUND * 10}. Keep building that vocab!`;
+        document.getElementById("pb").style.width = "100%";
+      } else {
+        loadQ();
+      }
+    }
+
+    document.getElementById("btn-restart").addEventListener("click", startGame);
+    startGame();
+  </script>
+</body>
+</html>

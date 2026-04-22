@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speed Math</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f13; --surface: #1a1a24; --border: #2a2a3a;
+      --accent: #f6821f; --text: #e8e8f0; --text-muted: #888899;
+      --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+    .back { position: fixed; top: 1rem; left: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
+    .back:hover { color: var(--accent); }
+    .game { width: 100%; max-width: 480px; text-align: center; }
+    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+    /* Start screen */
+    #start-screen { }
+    .difficulty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .diff-btn { background: var(--surface); border: 2px solid var(--border); border-radius: 10px; padding: 1rem 0.5rem; cursor: pointer; color: var(--text); transition: border-color 0.15s; }
+    .diff-btn:hover { border-color: var(--accent); }
+    .diff-btn.selected { border-color: var(--accent); background: rgba(246,130,31,0.1); }
+    .diff-btn h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+    .diff-btn p { font-size: 0.75rem; color: var(--text-muted); }
+    #btn-start { width: 100%; padding: 1rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+
+    /* Game screen */
+    #game-screen { display: none; }
+    .hud { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; }
+    .hud-item { text-align: center; }
+    .hud-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .hud-val { font-size: 1.4rem; font-weight: 800; }
+    #timer-val { color: var(--accent); }
+    #timer-val.urgent { color: var(--red); animation: pulse 0.5s infinite alternate; }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    .timer-bar { height: 6px; background: var(--border); border-radius: 99px; margin-bottom: 1.5rem; overflow: hidden; }
+    .timer-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.1s linear, background 0.3s; }
+
+    .problem-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; margin-bottom: 1rem; }
+    .problem { font-size: 3rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .op-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    input#answer { width: 100%; padding: 1rem; border-radius: 8px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-size: 1.5rem; font-weight: 700; text-align: center; outline: none; transition: border-color 0.15s; margin-bottom: 0.75rem; }
+    input#answer:focus { border-color: var(--accent); }
+    input#answer.correct { border-color: var(--green); background: rgba(34,197,94,0.08); }
+    input#answer.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); }
+
+    .feedback { height: 1.5rem; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .feedback.correct { color: var(--green); }
+    .feedback.wrong { color: var(--red); }
+
+    #streak-display { font-size: 0.85rem; color: var(--text-muted); }
+    #streak-display span { color: var(--yellow); font-weight: 700; }
+
+    /* Game over */
+    #game-over { display: none; }
+    #game-over h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; }
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1.5rem 0; }
+    .result-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+    .result-item .val { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+    .result-item .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+    #btn-play-again { width: 100%; padding: 1rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 0.75rem; }
+    #btn-menu { width: 100%; padding: 0.85rem; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Game Hub</a>
+
+  <div class="game">
+    <h1>⚡ Speed Math</h1>
+    <p class="subtitle">Solve as many problems as you can in 60 seconds</p>
+
+    <div id="start-screen">
+      <div class="difficulty-grid">
+        <button class="diff-btn selected" data-diff="easy">
+          <h3>Easy</h3>
+          <p>+/- up to 20</p>
+        </button>
+        <button class="diff-btn" data-diff="medium">
+          <h3>Medium</h3>
+          <p>×/÷ up to 12</p>
+        </button>
+        <button class="diff-btn" data-diff="hard">
+          <h3>Hard</h3>
+          <p>Mixed, bigger nums</p>
+        </button>
+      </div>
+      <button id="btn-start">Start Game</button>
+    </div>
+
+    <div id="game-screen">
+      <div class="hud">
+        <div class="hud-item">
+          <div class="hud-label">Score</div>
+          <div class="hud-val" id="score-val">0</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Time</div>
+          <div class="hud-val" id="timer-val">60</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Correct</div>
+          <div class="hud-val" id="correct-val">0</div>
+        </div>
+      </div>
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+      <div class="problem-card">
+        <div class="problem" id="problem">—</div>
+        <div class="op-label" id="op-label"></div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <input type="number" id="answer" placeholder="?" autocomplete="off" />
+      <div id="streak-display">Streak: <span id="streak-val">0</span> 🔥</div>
+    </div>
+
+    <div id="game-over">
+      <h2 id="go-title">Time's Up!</h2>
+      <div class="result-grid">
+        <div class="result-item"><div class="val" id="res-score">0</div><div class="label">Score</div></div>
+        <div class="result-item"><div class="val" id="res-correct">0</div><div class="label">Correct</div></div>
+        <div class="result-item"><div class="val" id="res-best">0</div><div class="label">Best</div></div>
+      </div>
+      <button id="btn-play-again">Play Again</button>
+      <button id="btn-menu">Change Difficulty</button>
+    </div>
+  </div>
+
+  <script>
+    const DURATION = 60;
+    let difficulty = "easy";
+    let timer, timeLeft, score, correct, streak, currentAnswer;
+
+    const diffBtns = document.querySelectorAll(".diff-btn");
+    diffBtns.forEach(b => {
+      b.addEventListener("click", () => {
+        diffBtns.forEach(x => x.classList.remove("selected"));
+        b.classList.add("selected");
+        difficulty = b.dataset.diff;
+      });
+    });
+
+    function genProblem() {
+      let a, b, op, answer;
+      const ops = difficulty === "easy" ? ["+", "-"]
+                : difficulty === "medium" ? ["+", "-", "×", "÷"]
+                : ["+", "-", "×", "÷"];
+
+      op = ops[Math.floor(Math.random() * ops.length)];
+
+      if (difficulty === "easy") {
+        a = Math.floor(Math.random() * 20) + 1;
+        b = Math.floor(Math.random() * 20) + 1;
+        if (op === "-" && b > a) [a, b] = [b, a];
+        answer = op === "+" ? a + b : a - b;
+      } else if (difficulty === "medium") {
+        if (op === "×" || op === "÷") {
+          b = Math.floor(Math.random() * 12) + 1;
+          a = op === "÷" ? b * (Math.floor(Math.random() * 12) + 1) : Math.floor(Math.random() * 12) + 1;
+          answer = op === "×" ? a * b : a / b;
+        } else {
+          a = Math.floor(Math.random() * 50) + 1;
+          b = Math.floor(Math.random() * 50) + 1;
+          if (op === "-" && b > a) [a, b] = [b, a];
+          answer = op === "+" ? a + b : a - b;
+        }
+      } else {
+        if (op === "×" || op === "÷") {
+          b = Math.floor(Math.random() * 15) + 2;
+          a = op === "÷" ? b * (Math.floor(Math.random() * 15) + 2) : Math.floor(Math.random() * 15) + 2;
+          answer = op === "×" ? a * b : a / b;
+        } else {
+          a = Math.floor(Math.random() * 200) + 10;
+          b = Math.floor(Math.random() * 200) + 10;
+          if (op === "-" && b > a) [a, b] = [b, a];
+          answer = op === "+" ? a + b : a - b;
+        }
+      }
+
+      const labels = { "+": "Addition", "-": "Subtraction", "×": "Multiplication", "÷": "Division" };
+      return { display: `${a} ${op} ${b} = ?`, answer, label: labels[op] };
+    }
+
+    function loadProblem() {
+      const p = genProblem();
+      currentAnswer = p.answer;
+      document.getElementById("problem").textContent = p.display;
+      document.getElementById("op-label").textContent = p.label;
+      document.getElementById("answer").value = "";
+      document.getElementById("answer").className = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("feedback").className = "feedback";
+      document.getElementById("answer").focus();
+    }
+
+    function startGame() {
+      score = 0; correct = 0; streak = 0; timeLeft = DURATION;
+      document.getElementById("score-val").textContent = 0;
+      document.getElementById("correct-val").textContent = 0;
+      document.getElementById("streak-val").textContent = 0;
+      document.getElementById("timer-val").textContent = DURATION;
+      document.getElementById("timer-val").classList.remove("urgent");
+      document.getElementById("timer-fill").style.width = "100%";
+      document.getElementById("timer-fill").style.background = "var(--accent)";
+      document.getElementById("start-screen").style.display = "none";
+      document.getElementById("game-over").style.display = "none";
+      document.getElementById("game-screen").style.display = "block";
+
+      loadProblem();
+
+      timer = setInterval(() => {
+        timeLeft--;
+        const pct = (timeLeft / DURATION) * 100;
+        document.getElementById("timer-val").textContent = timeLeft;
+        document.getElementById("timer-fill").style.width = pct + "%";
+        if (timeLeft <= 10) {
+          document.getElementById("timer-val").classList.add("urgent");
+          document.getElementById("timer-fill").style.background = "var(--red)";
+        }
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      document.getElementById("game-screen").style.display = "none";
+      document.getElementById("game-over").style.display = "block";
+      document.getElementById("res-score").textContent = score;
+      document.getElementById("res-correct").textContent = correct;
+      const key = `speedmath-best-${difficulty}`;
+      const prev = parseInt(localStorage.getItem(key) || "0");
+      const best = Math.max(prev, score);
+      localStorage.setItem(key, best);
+      document.getElementById("res-best").textContent = best;
+      document.getElementById("go-title").textContent = score > prev ? "New Best!" : "Time's Up!";
+    }
+
+    document.getElementById("answer").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const val = parseInt(document.getElementById("answer").value);
+        if (isNaN(val)) return;
+        const inp = document.getElementById("answer");
+        const fb = document.getElementById("feedback");
+        if (val === currentAnswer) {
+          streak++;
+          const bonus = Math.floor(streak / 3);
+          score += 10 + bonus;
+          correct++;
+          inp.className = "correct";
+          fb.textContent = streak >= 3 ? `Correct! 🔥 ${streak} streak` : "Correct!";
+          fb.className = "feedback correct";
+        } else {
+          streak = 0;
+          fb.textContent = `Wrong. Answer was ${currentAnswer}`;
+          fb.className = "feedback wrong";
+          inp.className = "wrong";
+        }
+        document.getElementById("score-val").textContent = score;
+        document.getElementById("correct-val").textContent = correct;
+        document.getElementById("streak-val").textContent = streak;
+        setTimeout(loadProblem, 400);
+      }
+    });
+
+    document.getElementById("btn-start").addEventListener("click", startGame);
+    document.getElementById("btn-play-again").addEventListener("click", startGame);
+    document.getElementById("btn-menu").addEventListener("click", () => {
+      document.getElementById("game-over").style.display = "none";
+      document.getElementById("start-screen").style.display = "block";
+    });
+  </script>
+</body>
+</html>

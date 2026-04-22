@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Logo Quiz</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f13; --surface: #1a1a24; --border: #2a2a3a;
+      --accent: #f6821f; --text: #e8e8f0; --text-muted: #888899;
+      --green: #22c55e; --red: #ef4444;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+    .back { position: fixed; top: 1rem; left: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
+    .back:hover { color: var(--accent); }
+    .game { width: 100%; max-width: 540px; text-align: center; }
+    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .score-bar { display: flex; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 2rem; font-size: 0.9rem; }
+    .score-bar span { color: var(--text-muted); }
+    .score-bar strong { color: var(--accent); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; }
+    .logo-box { font-size: 7rem; margin-bottom: 1.5rem; line-height: 1; user-select: none; filter: drop-shadow(0 0 20px rgba(246,130,31,0.2)); }
+    .hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .opt { background: var(--bg); border: 2px solid var(--border); border-radius: 8px; padding: 0.85rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; color: var(--text); }
+    .opt:hover:not(:disabled) { border-color: var(--accent); background: rgba(246,130,31,0.08); }
+    .opt.correct { border-color: var(--green); background: rgba(34,197,94,0.12); color: var(--green); }
+    .opt.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); color: var(--red); }
+    .opt:disabled { cursor: default; }
+    .feedback { min-height: 2rem; font-size: 1rem; font-weight: 600; margin-top: 1rem; }
+    .feedback.correct { color: var(--green); }
+    .feedback.wrong { color: var(--red); }
+    #game-over { display: none; }
+    #game-over h2 { font-size: 2rem; margin-bottom: 0.5rem; }
+    #game-over p { color: var(--text-muted); margin-bottom: 1.5rem; }
+    #btn-restart { background: var(--accent); color: #fff; padding: 0.85rem 2rem; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .progress { height: 4px; background: var(--border); border-radius: 99px; margin-bottom: 1.5rem; }
+    .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s ease; }
+  </style>
+</head>
+<body>
+  <a class="back" href="https://game-hub.kiishiogunbiyi.workers.dev">← Game Hub</a>
+
+  <div class="game">
+    <h1>🚗 Car Logo Quiz</h1>
+    <p class="subtitle">Identify the car brand from its logo</p>
+
+    <div class="score-bar">
+      <span>Score: <strong id="score">0</strong></span>
+      <span><strong id="qnum">1</strong> / <strong id="qtotal">12</strong></span>
+      <span>Best: <strong id="best">0</strong></span>
+    </div>
+
+    <div class="progress"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+
+    <div id="game-area">
+      <div class="card">
+        <div class="logo-box" id="logo"></div>
+        <div class="hint" id="hint"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </div>
+
+    <div id="game-over">
+      <h2>Quiz Done!</h2>
+      <p id="final-score"></p>
+      <button id="btn-restart">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    // Car logos represented as SVG-based Unicode + text combos
+    // Using brand-appropriate emoji/text since we can't embed actual trademark logos
+    const CARS = [
+      { brand: "BMW", logo: "⚪🔵⚪", hint: "German luxury automaker known for the 'Ultimate Driving Machine'", founded: "1916, Germany" },
+      { brand: "Ferrari", logo: "🐴🔴", hint: "Italian luxury sports car manufacturer, prancing horse emblem", founded: "1939, Italy" },
+      { brand: "Lamborghini", logo: "🐂🟡", hint: "Italian supercar brand known for a raging bull symbol", founded: "1963, Italy" },
+      { brand: "Porsche", logo: "🐴🖤", hint: "German sports car maker, horse on Stuttgart crest", founded: "1931, Germany" },
+      { brand: "Ford", logo: "🔵〰️", hint: "American automaker, blue oval badge since 1927", founded: "1903, USA" },
+      { brand: "Toyota", logo: "⭕⭕⭕", hint: "Japanese automaker with three overlapping ellipses logo", founded: "1937, Japan" },
+      { brand: "Audi", logo: "⭕⭕⭕⭕", hint: "German brand with four interlocking rings representing four companies", founded: "1909, Germany" },
+      { brand: "Mercedes-Benz", logo: "✨⭕", hint: "German luxury brand with the iconic three-pointed star", founded: "1926, Germany" },
+      { brand: "Honda", logo: "🅗🔴", hint: "Japanese automaker, stylized H badge", founded: "1948, Japan" },
+      { brand: "Chevrolet", logo: "➕🏁", hint: "American brand with a golden bowtie emblem", founded: "1911, USA" },
+      { brand: "Rolls-Royce", logo: "👑🔵", hint: "British ultra-luxury brand, Spirit of Ecstasy hood ornament", founded: "1906, UK" },
+      { brand: "Bugatti", logo: "🔴⚫🔷", hint: "French hypercar maker, oval badge with EB initials", founded: "1909, France" },
+      { brand: "Tesla", logo: "⚡🔴", hint: "American EV maker, stylized T logo inspired by electric motor cross-section", founded: "2003, USA" },
+      { brand: "Volkswagen", logo: "🔵V+W", hint: "German 'People's Car' brand, VW stacked in a circle", founded: "1937, Germany" },
+      { brand: "Maserati", logo: "🔱🔵", hint: "Italian luxury brand with a trident symbol from Bologna's fountain", founded: "1914, Italy" },
+      { brand: "Bentley", logo: "🅑🟤", hint: "British luxury brand, winged B badge", founded: "1919, UK" },
+    ];
+
+    const ROUND_SIZE = 12;
+    let questions = [], current = 0, score = 0, best = parseInt(localStorage.getItem("car-best") || "0");
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    function getWrongOptions(correct, all) {
+      return shuffle(all.filter(c => c.brand !== correct.brand)).slice(0, 3).map(c => c.brand);
+    }
+
+    function startGame() {
+      questions = shuffle(CARS).slice(0, ROUND_SIZE);
+      current = 0; score = 0;
+      document.getElementById("qtotal").textContent = ROUND_SIZE;
+      document.getElementById("best").textContent = best;
+      document.getElementById("game-over").style.display = "none";
+      document.getElementById("game-area").style.display = "block";
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const q = questions[current];
+      document.getElementById("qnum").textContent = current + 1;
+      document.getElementById("score").textContent = score;
+      document.getElementById("logo").textContent = q.logo;
+      document.getElementById("hint").textContent = q.hint;
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("feedback").className = "feedback";
+      document.getElementById("progress-bar").style.width = `${(current / ROUND_SIZE) * 100}%`;
+
+      const opts = shuffle([q.brand, ...getWrongOptions(q, CARS)]);
+      const container = document.getElementById("options");
+      container.innerHTML = "";
+      opts.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.textContent = opt;
+        btn.addEventListener("click", () => answer(btn, opt, q.brand));
+        container.appendChild(btn);
+      });
+    }
+
+    function answer(btn, chosen, correct) {
+      document.querySelectorAll(".opt").forEach(b => b.disabled = true);
+      const fb = document.getElementById("feedback");
+      if (chosen === correct) {
+        btn.classList.add("correct");
+        score += 10;
+        fb.textContent = "Correct!";
+        fb.className = "feedback correct";
+      } else {
+        btn.classList.add("wrong");
+        document.querySelectorAll(".opt").forEach(b => {
+          if (b.textContent === correct) b.classList.add("correct");
+        });
+        fb.textContent = `Wrong. It's ${correct}.`;
+        fb.className = "feedback wrong";
+      }
+      document.getElementById("score").textContent = score;
+      setTimeout(next, 1600);
+    }
+
+    function next() {
+      current++;
+      if (current >= questions.length) {
+        if (score > best) { best = score; localStorage.setItem("car-best", best); }
+        document.getElementById("game-area").style.display = "none";
+        document.getElementById("game-over").style.display = "block";
+        document.getElementById("final-score").textContent = `You scored ${score} / ${ROUND_SIZE * 10}`;
+        document.getElementById("progress-bar").style.width = "100%";
+      } else {
+        loadQuestion();
+      }
+    }
+
+    document.getElementById("btn-restart").addEventListener("click", startGame);
+    startGame();
+  </script>
+</body>
+</html>
